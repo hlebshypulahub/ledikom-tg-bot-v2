@@ -27,15 +27,6 @@ public class PharmacyService {
         this.botUtilityService = botUtilityService;
     }
 
-    @PostConstruct
-    public void initAndPersistPharmacies() {
-        Pharmacy pharmacy = new Pharmacy(12, "Аптека №12", City.CHERVIEN, "г. Червень, ул. Чапаева, 23", "09:00-20:00, обед 14:00-14:30", "+375 1714 55470", "https://maps.app.goo.gl/WVXiHHU6r5y3LKQAA");
-        Pharmacy pharmacy2 = new Pharmacy(18, "Аптека №18", City.MINSK, "г. Минск, ул. Красная, 13", "09:00-21:00, обед 14:00-14:30", "+375 17 2705428", "https://maps.app.goo.gl/YiasqjM3h4ESHaZr9");
-        Pharmacy pharmacy3 = new Pharmacy(19, "Аптека №19", City.BORISOV, "г. Борисов, ул. М.Горького, 115", "09:00-20:00, обед 14:00-14:30", "+375 177 794003", "https://maps.app.goo.gl/DAFah6gg3V2bhKaZA");
-        Pharmacy pharmacy4 = new Pharmacy(20, "Аптека №20", City.BORISOV, "г. Борисов, ул. Р.Люксембург, 65", "09:00-20:00, обед 14:00-14:30", "+375 177 741100", "https://maps.app.goo.gl/CpHGGvYoqqC2dSxj8");
-        pharmacyRepository.saveAll(List.of(pharmacy, pharmacy2, pharmacy3, pharmacy4));
-    }
-
     public void addCitiesButtons(final SendMessage sm) {
         botUtilityService.addCitiesButtons(sm, findAll().stream().map(Pharmacy::getCity).collect(Collectors.toSet()));
     }
