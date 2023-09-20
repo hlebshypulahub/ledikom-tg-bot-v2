@@ -157,7 +157,7 @@ public class UserService {
                     e.printStackTrace();
                 }
                 if (gptResponse.toLowerCase().contains(GptMessage.NON_RELATED_RESPONSE_TOKEN)) {
-                    sendMessageCallback.execute(botUtilityService.buildSendMessage("Вопрос не относится к теме медицины или здоровья.", chatId));
+                    sendMessageCallback.execute(botUtilityService.buildSendMessage("Извините, но я не могу понять ваш вопрос. Пожалуйста, задайте более конкретный вопрос, связанный с медициной или здоровьем.", chatId));
                     throw new RuntimeException("Question is not on medicine&health topic");
                 }
                 sendMessageCallback.execute(botUtilityService.buildSendMessage(gptResponse, chatId));
