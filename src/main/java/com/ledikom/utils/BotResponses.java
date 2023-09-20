@@ -81,9 +81,9 @@ public final class BotResponses {
     }
 
     public static String referralMessage(final String refLink, final int referralCount, final Coupon coupon) {
-        return "Ваша реферальная ссылка:\n\n\n" + "[" + refLink + "](" + refLink + ")" + "\n\n\n*Количество приглашенных вами пользователей:   "
+        return "Ваша реферальная ссылка:\n\n\n" + "`" + refLink + "`\n\n\n*Количество приглашенных вами пользователей:   "
                 + referralCount + "*\n\n\nПоделитесь ссылкой с вашими контактами и получайте бонусы!\n\n"
-                + "\uD83E\uDD47 за каждые 10 приглашенных: *" + coupon.getName() + "*";
+                + "\uD83E\uDD47 за каждые 10 приглашенных: \n*" + coupon.getName() + "\n" + coupon.getText() + "*";
     }
 
     public static String couponExpiredMessage() {
