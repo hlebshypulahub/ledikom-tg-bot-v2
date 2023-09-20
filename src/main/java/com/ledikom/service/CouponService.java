@@ -68,7 +68,6 @@ public class CouponService {
     public void initCallbacks() {
         this.sendMessageCallback = ledikomBot.getSendMessageCallback();
         this.sendMessageWithPhotoCallback = ledikomBot.getSendMessageWithPhotoCallback();
-        saveStaleCoupons();
     }
 
     private void saveStaleCoupons() {
