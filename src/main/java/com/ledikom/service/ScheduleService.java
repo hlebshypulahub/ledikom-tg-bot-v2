@@ -80,7 +80,6 @@ public class ScheduleService {
 
     @Scheduled(cron = "0 0 0 * * *", zone = "GMT+3")
     public void deleteExpiredStaleCouponsFromUser() {
-        System.out.println("DELETE");
         userService.deleteExpiredStaleCouponsFromUser();
     }
 
