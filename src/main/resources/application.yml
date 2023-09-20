@@ -1,34 +1,35 @@
 spring:
   datasource:
-    url: jdbc:postgresql://82.209.251.148:60555/inventory
-    username: inventory_user
-    password: o5EOEPnCEvqN
+    url: ${DATABASE_URL}
+    username: ${DATABASE_USERNAME}
+    password: ${DATABASE_PASSWORD}
     driver-class-name: org.postgresql.Driver
   jpa:
-    hibernate:
-      ddl-auto: create-drop
     database-platform: org.hibernate.dialect.PostgreSQLDialect
 
 bot:
-  username: ledikom_prod_bot
-  token: 6389794382:AAEr21msmS-AfQbfxEkMzPG2uPjmGhJ6pfs
+  username: ${BOT_USERNAME}
+  token: ${BOT_TOKEN}
 
 admin:
-  id: 1047250041
-  tech-id: 1047250041
+  id: {ADMIN_ID}
+  tech-id: ${ADMIN_TECH_ID}
+
+gpt:
+  token: ${GPT_TOKEN}
 
 coupon:
   duration-minutes: 5
   expire-in-days: 30
 
 hello-coupon:
-  barcode: 3353894316151
+  barcode: ${HELLO_COUPON_BARCODE}
 
 date-coupon:
-  barcode: 3353849316182
+  barcode: ${DATE_COUPON_BARCODE}
 
 ref-coupon:
-  barcode: 3353894626113
+  barcode: ${REF_COUPON_BARCODE}
 
 poll:
   active-time-days: 7

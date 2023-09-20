@@ -16,7 +16,7 @@ import org.springframework.web.client.RestTemplate;
 @Service
 public class GptService {
 
-    @Value("${GPT_TOKEN}")
+    @Value("${gpt.token}")
     private String gptToken;
 
     private final RestTemplate restTemplate;
