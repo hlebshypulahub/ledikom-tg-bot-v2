@@ -80,6 +80,8 @@ public class LedikomBot extends TelegramLongPollingBot {
                 this.botService::sendBotDescription);
         chatIdActions.put(cmd -> cmd.equals("note_edit"),
                 this.userService::setSendingNoteStateToUser);
+        chatIdActions.put(cmd -> cmd.equals("consultation_repeat"),
+                this.userService::sendConsultationShortWikiAndSetUserResponseState);
         chatIdActions.put(cmd -> cmd.equals(BotCommands.REF_LINK.label),
                 this.userService::sendReferralLinkForUser);
         chatIdActions.put(cmd -> cmd.equals(BotCommands.TRIGGER_NEWS.label),

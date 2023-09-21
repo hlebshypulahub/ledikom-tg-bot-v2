@@ -127,7 +127,6 @@ public class CouponService {
     public void addCouponToMap(final MessageIdInChat messageIdInChat, final String couponText) {
         long expiryTimestamp = System.currentTimeMillis() + couponDurationInMinutes * 60 * 1000L;
         UserCouponRecord userCouponRecord = new UserCouponRecord(expiryTimestamp, couponText);
-        LOGGER.info("Putting user coupon record to map: {}, {}", messageIdInChat, userCouponRecord);
         userCoupons.put(messageIdInChat, userCouponRecord);
     }
 
@@ -213,7 +212,7 @@ public class CouponService {
 
         List<User> users = userService.findAllUsers();
 
-        List<Coupon> couponsWithFirstActiveDay = couponRepository.findAll().stream().filter(coupon -> datesEqual(coupon.getStartDate(), getZonedDateTimeNow())).toList();
+        List<Coupon> couponsWithFirstActiveDay = couponRepository.findAll().stream().filter(coupon -> !couponIsStale(coupon) && datesEqual(coupon.getStartDate(), getZonedDateTimeNow())).toList();
 
         LOGGER.info("Coupons found:\n{}", couponsWithFirstActiveDay);
 

@@ -111,11 +111,9 @@ public class UserService {
         User user = findByChatId(chatId);
         if (user.getResponseState() == UserResponseState.SENDING_NOTE) {
             user.setNote(text);
-            user.setResponseState(UserResponseState.NONE);
-            saveUser(user);
+            setUserState(user, UserResponseState.NONE);
             sendMessageCallback.execute(botUtilityService.buildSendMessage(BotResponses.noteAdded(), chatId));
             BotService.eventCollector.incrementNote();
-            userStatesToReset.remove(chatId);
         } else if (user.getResponseState() == UserResponseState.SENDING_DATE) {
             try {
                 String[] splitDateString = text.trim().split("\\.");
@@ -126,8 +124,7 @@ public class UserService {
                 var month = Integer.parseInt(splitDateString[1]);
                 LocalDateTime specialDate = LocalDateTime.of(2000, month, day, 0, 0);
                 user.setSpecialDate(specialDate);
-                user.setResponseState(UserResponseState.NONE);
-                saveUser(user);
+                setUserState(user, UserResponseState.NONE);
                 sendMessageCallback.execute(botUtilityService.buildSendMessage(BotResponses.yourSpecialDate(specialDate), chatId));
 
                 if (specialDate.getDayOfMonth() == LocalDate.now().getDayOfMonth() && specialDate.getMonthValue() == LocalDate.now().getMonthValue()) {
@@ -135,7 +132,6 @@ public class UserService {
                 }
 
                 BotService.eventCollector.incrementDate();
-                userStatesToReset.remove(chatId);
             } catch (RuntimeException e) {
                 sendMessageCallback.execute(botUtilityService.buildSendMessage("❗Неверный формат даты, введите сообщение в цифровом формате:\n\nдень.месяц", chatId));
                 throw new RuntimeException("Invalid special date format: " + text);
@@ -145,8 +141,7 @@ public class UserService {
                 sendMessageCallback.execute(botUtilityService.buildSendMessage("Вопрос содержит более " + GptMessage.MAX_USER_CONTENT_LENGTH + " знаков. Сократите и повторите попытку.", chatId));
                 throw new RuntimeException("User content length exceeds max limit: length = " + text.length());
             } else {
-                user.setResponseState(UserResponseState.NONE);
-                saveUser(user);
+                setUserState(user, UserResponseState.NONE);
                 sendMessageCallback.execute(botUtilityService.buildSendMessage(BotResponses.waitForGptResponse(), chatId));
                 String gptResponse;
                 try {
@@ -157,13 +152,16 @@ public class UserService {
                     e.printStackTrace();
                 }
                 if (gptResponse.toLowerCase().contains(GptMessage.NON_RELATED_RESPONSE_TOKEN)) {
-                    sendMessageCallback.execute(botUtilityService.buildSendMessage("Извините, но я не могу понять ваш вопрос. Пожалуйста, задайте более конкретный вопрос, связанный с медициной или здоровьем.", chatId));
+                    var sm = botUtilityService.buildSendMessage("Извините, но я не могу понять ваш вопрос. Пожалуйста, задайте более конкретный вопрос, связанный с медициной или здоровьем.", chatId);
+                    botUtilityService.addRepeatConsultationButton(sm);
+                    sendMessageCallback.execute(sm);
                     throw new RuntimeException("Question is not on medicine&health topic");
                 }
-                sendMessageCallback.execute(botUtilityService.buildSendMessage(gptResponse, chatId));
+                var sm = botUtilityService.buildSendMessage(gptResponse, chatId);
+                botUtilityService.addRepeatConsultationButton(sm);
+                sendMessageCallback.execute(sm);
                 LOGGER.info("Вопрос: " + text);
                 LOGGER.info("Ответ: " + gptResponse);
-                userStatesToReset.remove(chatId);
                 BotService.eventCollector.incrementConsultation();
             }
         } else {
@@ -228,7 +226,7 @@ public class UserService {
         if (userRepository.findByChatId(chatId).isPresent()) {
             return true;
         }
-        LOGGER.error("User not exists by chatId: {}", chatId);
+        LOGGER.info("User not exists by chatId: {}", chatId);
         return false;
     }
 
@@ -254,29 +252,10 @@ public class UserService {
     }
 
     private void setSendingNoteStateToUser(final User user) {
-        userStatesToReset.remove(user.getChatId());
-
-        user.setResponseState(UserResponseState.SENDING_NOTE);
-        saveUser(user);
+        setUserState(user, UserResponseState.SENDING_NOTE);
 
         userStatesToReset.put(user.getChatId(), LocalDateTime.now().plusMinutes(TO_RESET_AFTER_TIME_MIN));
     }
-
-//    public void processNoteRequestAndBuildSendMessageList(final long chatId) {
-//        userStatesToReset.remove(chatId);
-//
-//        User user = findByChatId(chatId);
-//        user.setResponseState(UserResponseState.SENDING_NOTE);
-//        saveUser(user);
-//
-//        if (user.getNote() != null && !user.getNote().isBlank()) {
-//            sendMessageCallback.execute(botUtilityService.buildSendMessage(BotResponses.editNote(user.getNote()), chatId));
-//        } else {
-//            sendMessageCallback.execute(botUtilityService.buildSendMessage(BotResponses.addNote(), chatId));
-//        }
-//
-//        userStatesToReset.put(chatId, LocalDateTime.now().plusMinutes(TO_RESET_AFTER_TIME_MIN));
-//    }
 
     public boolean userIsInActiveState(final Long chatId) {
         return findByChatId(chatId).getResponseState() != UserResponseState.NONE;
@@ -375,6 +354,7 @@ public class UserService {
     public void sendReferralLinkForUser(final Long chatId) {
         sendMessageCallback.execute(botUtilityService.buildSendMessage(BotResponses.referralMessage(getRefLink(chatId), findByChatId(chatId).getReferralCount(),
                 couponService.getRefCoupon()), chatId));
+        sendMessageCallback.execute(botUtilityService.buildSendMessage(BotResponses.referralLinkToForward(getRefLink(chatId)), chatId));
     }
 
     private String getRefLink(final Long chatId) {
@@ -397,9 +377,7 @@ public class UserService {
         User user = findByChatId(chatId);
         SendMessage sm;
         if (user.getSpecialDate() == null) {
-            userStatesToReset.remove(chatId);
-            user.setResponseState(UserResponseState.SENDING_DATE);
-            saveUser(user);
+            setUserState(user, UserResponseState.SENDING_DATE);
             sm = botUtilityService.buildSendMessage(BotResponses.addSpecialDate(), chatId);
             userStatesToReset.put(chatId, LocalDateTime.now().plusMinutes(TO_RESET_AFTER_TIME_MIN));
         } else {
@@ -408,20 +386,33 @@ public class UserService {
         sendMessageCallback.execute(sm);
     }
 
-    public void resetUserState(final Long chatId) {
-        User user = findByChatId(chatId);
-        user.setResponseState(UserResponseState.NONE);
-        saveUser(user);
-    }
-
     public void sendConsultationWikiAndSetUserResponseState(final long chatId) {
-        userStatesToReset.remove(chatId);
-
-        User user = findByChatId(chatId);
-        user.setResponseState(UserResponseState.SENDING_QUESTION);
-        saveUser(user);
+        setUserState(chatId, UserResponseState.SENDING_QUESTION);
 
         userStatesToReset.put(chatId, LocalDateTime.now().plusMinutes(TO_RESET_AFTER_TIME_MIN));
         sendMessageCallback.execute(botUtilityService.buildSendMessage(BotResponses.consultationWiki(), chatId));
+    }
+
+    public void sendConsultationShortWikiAndSetUserResponseState(final long chatId) {
+        setUserState(chatId, UserResponseState.SENDING_QUESTION);
+        userStatesToReset.put(chatId, LocalDateTime.now().plusMinutes(TO_RESET_AFTER_TIME_MIN));
+        sendMessageCallback.execute(botUtilityService.buildSendMessage(BotResponses.consultationShortWiki(), chatId));
+    }
+
+    private void setUserState(final long chatId, final UserResponseState state) {
+        userStatesToReset.remove(chatId);
+        User user = findByChatId(chatId);
+        user.setResponseState(state);
+        saveUser(user);
+    }
+
+    private void setUserState(final User user, final UserResponseState state) {
+        userStatesToReset.remove(user.getChatId());
+        user.setResponseState(state);
+        saveUser(user);
+    }
+
+    public void resetUserState(final Long chatId) {
+        setUserState(chatId, UserResponseState.NONE);
     }
 }

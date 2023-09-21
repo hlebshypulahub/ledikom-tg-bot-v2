@@ -33,3 +33,10 @@ ref-coupon:
 
 poll:
   active-time-days: 7
+
+management:
+  endpoint:
+    health:
+      show-details: always
+      probes:
+        enabled: true
