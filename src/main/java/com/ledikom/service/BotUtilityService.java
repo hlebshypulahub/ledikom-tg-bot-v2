@@ -133,6 +133,10 @@ public class BotUtilityService {
         addButtonToMessage(sm, buttonText, "couponAccept_" + coupon.getId());
     }
 
+    public void addRepeatConsultationButton(final SendMessage sm) {
+        addButtonToMessage(sm, "Спросить еще раз", "consultation_repeat");
+    }
+
     public void addPreviewCouponButton(final SendMessage sm, final Coupon coupon, final String buttonText) {
         addButtonToMessage(sm, buttonText, "couponPreview_" + coupon.getId());
     }
@@ -155,6 +159,8 @@ public class BotUtilityService {
                 prefix = "(" + ChronoUnit.DAYS.between(LocalDate.now(), user.getDateCouponExpiryDate()) + " д.) ";
             } else if (coupon.getBarcode().equals(refCouponBarcode)) {
                 prefix = "(" + ChronoUnit.DAYS.between(LocalDate.now(), user.getRefCouponExpiryDate()) + " д.) ";
+            } else {
+                prefix = "(" + ChronoUnit.DAYS.between(LocalDate.now(), coupon.getEndDate())  + " д.)";
             }
 
             button.setText(prefix + coupon.getName());

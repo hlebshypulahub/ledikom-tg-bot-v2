@@ -42,6 +42,8 @@ public class BotService {
     private int couponDurationInMinutes;
     @Value("${admin.id}")
     private Long adminId;
+    @Value("${admin.tech-id}")
+    private Long techAdminId;
 
     private final UserService userService;
     private final CouponService couponService;
@@ -66,6 +68,8 @@ public class BotService {
         this.sendMessageWithPhotoCallback = ledikomBot.getSendMessageWithPhotoCallback();
         this.sendMessageCallback = ledikomBot.getSendMessageCallback();
         this.sendMusicFileCallback = ledikomBot.getSendMusicFileCallback();
+        this.sendMessageCallback.execute(botUtilityService.buildSendMessage("Application started.", techAdminId));
+        LOGGER.info("Application started.");
     }
 
     public void processStartOrRefLinkFollow(final String command, final Long chatId) {
@@ -183,7 +187,7 @@ public class BotService {
 
         MessageIdInChat messageIdInChat = sendMessageWithPhotoCallback.execute(barcodeInputFile, BotResponses.initialCouponText(couponTextWithBarcodeAndTimeSign, couponDurationInMinutes), chatId);
         LOGGER.info("Adding coupon to map: {}, {}", messageIdInChat, couponTextWithBarcodeAndTimeSign);
-        couponService.addCouponToMap(messageIdInChat, couponTextWithBarcodeAndTimeSign);
+        couponService.addCouponToMap(messageIdInChat, coupon.getName());
         userService.markCouponAsUsedForUser(user, coupon);
 
         eventCollector.incrementCoupon();

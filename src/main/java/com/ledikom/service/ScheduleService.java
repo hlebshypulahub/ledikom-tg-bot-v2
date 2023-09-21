@@ -18,6 +18,8 @@ import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.DeleteMessage;
 
 import java.time.LocalDateTime;
+import java.util.List;
+import java.util.Map;
 
 // TODO: add logs
 @Service
@@ -57,7 +59,7 @@ public class ScheduleService {
         this.deleteMessageCallback = ledikomBot.getDeleteMessageCallback();
     }
 
-    @Scheduled(cron = "0 0 8-19 * * *", zone = "GMT+3")
+    @Scheduled(cron = "0 0 8-20 * * *", zone = "GMT+3")
     public void sendEventsToAdmin() {
         BotService.eventCollector.setTimestamp(LocalDateTime.now());
         eventCollectorRepository.save(BotService.eventCollector);
@@ -117,14 +119,20 @@ public class ScheduleService {
     @Scheduled(fixedRate = 1000 * 60)
     public void resetUserStateIfNoResponseAfterTime() {
         LocalDateTime checkpointTimestamp = LocalDateTime.now();
-        UserService.userStatesToReset.entrySet().removeIf(entry -> {
-            if (entry.getValue().isBefore(checkpointTimestamp)) {
-                sendMessageCallback.execute(botUtilityService.buildSendMessage(BotResponses.responseTimeExceeded(), entry.getKey()));
-                userService.resetUserState(entry.getKey());
-                return true;
-            }
-            return false;
+
+        List<Long> keysToRemove = UserService.userStatesToReset.entrySet().stream()
+                .filter(entry -> entry.getValue().isBefore(checkpointTimestamp))
+                .map(Map.Entry::getKey)
+                .toList();
+
+        keysToRemove.forEach(key -> {
+            var sm = botUtilityService.buildSendMessage(BotResponses.responseTimeExceeded(), key);
+            botUtilityService.addRepeatConsultationButton(sm);
+            sendMessageCallback.execute(sm);
+            userService.resetUserState(key);
         });
+
+        keysToRemove.forEach(UserService.userStatesToReset::remove);
     }
 
     @Scheduled(cron = "0 0 8-19 * * *", zone = "GMT+3")
