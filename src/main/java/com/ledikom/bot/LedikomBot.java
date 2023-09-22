@@ -2,11 +2,8 @@ package com.ledikom.bot;
 
 import com.ledikom.callback.*;
 import com.ledikom.model.MessageIdInChat;
-import com.ledikom.service.AdminService;
-import com.ledikom.service.BotService;
-import com.ledikom.service.UserService;
-import com.ledikom.utils.BotCommands;
-import com.ledikom.utils.City;
+import com.ledikom.service.*;
+import com.ledikom.utils.*;
 import jakarta.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -58,52 +55,33 @@ public class LedikomBot extends TelegramLongPollingBot {
 
     @PostConstruct
     public void fillActionsMap() {
-        commandWithChatIdActions.put(cmd -> cmd.startsWith("couponPreview_"),
-                this.botService::sendCouponAcceptMessage);
-        commandWithChatIdActions.put(cmd -> cmd.startsWith("couponAccept_"),
-                this.botService::sendActivatedCouponIfCanBeUsed);
-        commandWithChatIdActions.put(cmd -> cmd.startsWith(BotCommands.START.label),
-                this.botService::processStartOrRefLinkFollow);
-        commandWithChatIdActions.put(cmd -> cmd.startsWith("music_"),
-                this.botService::processMusicRequest);
-        commandWithChatIdActions.put(cmd -> cmd.startsWith("pharmacies_"),
-                this.botService::sendPharmaciesInfo);
-        commandWithChatIdActions.put(cmd -> cmd.startsWith("workout_"),
-                this.botService::processWorkOutRequest);
-        commandWithChatIdActions.put(cmd -> cmd.startsWith("gymnastics_"),
-                this.botService::processGymnasticsRequest);
-        commandWithChatIdActions.put(cmd -> Arrays.stream(City.values()).map(Enum::name).toList().contains(cmd),
-                this.userService::setCityToUserAndAddCoupons);
-        chatIdActions.put(cmd -> cmd.equals(BotCommands.COUPONS.label),
-                this.userService::sendAllCouponsList);
-        chatIdActions.put(cmd -> cmd.equals(BotCommands.DESCRIPTION.label),
-                this.botService::sendBotDescription);
-        chatIdActions.put(cmd -> cmd.equals("note_edit"),
-                this.userService::setSendingNoteStateToUser);
-        chatIdActions.put(cmd -> cmd.equals("consultation_repeat"),
-                this.userService::sendConsultationShortWikiAndSetUserResponseState);
-        chatIdActions.put(cmd -> cmd.equals(BotCommands.REF_LINK.label),
-                this.userService::sendReferralLinkForUser);
-        chatIdActions.put(cmd -> cmd.equals(BotCommands.TRIGGER_NEWS.label),
-                this.userService::triggerReceiveNewsMessage);
-        chatIdActions.put(cmd -> cmd.equals(BotCommands.NOTES.label),
-                this.userService::processNoteRequestAndBuildSendMessageList);
-        chatIdActions.put(cmd -> cmd.equals(BotCommands.PHARMACIES.label),
-                this.botService::sendPharmaciesMenu);
-        chatIdActions.put(cmd -> cmd.equals(BotCommands.DATE.label),
-                this.userService::sendDateAndSetUserResponseState);
-        chatIdActions.put(cmd -> cmd.equals(BotCommands.MUSIC.label),
-                this.botService::sendMusicMenu);
-        chatIdActions.put(cmd -> cmd.equals(BotCommands.WORK_OUT.label),
-                this.botService::sendWorkOutMenu);
-        chatIdActions.put(cmd -> cmd.equals(BotCommands.GYMNASTICS.label),
-                this.botService::sendGymnasticsMenu);
-        chatIdActions.put(cmd -> cmd.equals(BotCommands.CITY.label),
-                this.botService::sendCityMenu);
-        chatIdActions.put(cmd -> cmd.equals(BotCommands.PROMOTION_ACCEPT.label),
-                this.botService::sendPromotionAcceptedMessage);
-        chatIdActions.put(cmd -> cmd.equals(BotCommands.CONSULTATION.label),
-                this.userService::sendConsultationWikiAndSetUserResponseState);
+        commandWithChatIdActions.put(cmd -> cmd.startsWith(CouponService.COUPON_PREVIEW_BUTTON_CALLBACK_STRING), this.botService::sendCouponAcceptMessage);
+        commandWithChatIdActions.put(cmd -> cmd.startsWith(CouponService.COUPON_ACCEPT_BUTTON_CALLBACK_STRING), this.botService::sendActivatedCouponIfCanBeUsed);
+        commandWithChatIdActions.put(cmd -> cmd.startsWith(BotCommand.START.label), this.botService::processStartOrRefLinkFollow);
+        commandWithChatIdActions.put(cmd -> cmd.startsWith(MusicMenuItem.MUSIC_BUTTON_CALLBACK_STRING), this.botService::processMusicRequest);
+        commandWithChatIdActions.put(cmd -> cmd.startsWith(PharmacyService.PHARMACIES_BUTTON_CALLBACK_STRING), this.botService::sendPharmaciesInfo);
+        commandWithChatIdActions.put(cmd -> cmd.startsWith(WorkOutMenuItem.WORK_OUT_BUTTON_CALLBACK_STRING), this.botService::processWorkOutRequest);
+        commandWithChatIdActions.put(cmd -> cmd.startsWith(GymnasticsMenuItem.GYMNASTICS_BUTTON_CALLBACK_STRING), this.botService::processGymnasticsRequest);
+        commandWithChatIdActions.put(cmd -> Arrays.stream(City.values()).map(Enum::name).toList().contains(cmd), this.userService::setCityToUserAndAddCoupons);
+        chatIdActions.put(cmd -> cmd.equals(BotCommand.COUPONS.label), this.userService::sendAllCouponsList);
+        chatIdActions.put(cmd -> cmd.equals(BotCommand.DESCRIPTION.label), this.botService::sendBotDescription);
+        chatIdActions.put(cmd -> cmd.equals(BotCommand.EDIT_NOTES.label), this.userService::setSendingNoteStateToUser);
+        chatIdActions.put(cmd -> cmd.equals(BotCommand.REF_LINK.label), this.userService::sendReferralLinkForUser);
+        chatIdActions.put(cmd -> cmd.equals(BotCommand.TRIGGER_NEWS.label), this.userService::triggerReceiveNewsMessage);
+        chatIdActions.put(cmd -> cmd.equals(BotCommand.NOTES.label), this.userService::processNoteRequestAndBuildSendMessageList);
+        chatIdActions.put(cmd -> cmd.equals(BotCommand.PHARMACIES.label), this.botService::sendPharmaciesMenu);
+        chatIdActions.put(cmd -> cmd.equals(BotCommand.DATE.label), this.userService::sendDateAndSetUserResponseState);
+        chatIdActions.put(cmd -> cmd.equals(BotCommand.MUSIC.label), this.botService::sendMusicMenu);
+        chatIdActions.put(cmd -> cmd.equals(BotCommand.HEALTH_BEING.label), this.botService::sendHealthBeingMenu);
+        chatIdActions.put(cmd -> cmd.equals(BotCommand.WORK_OUT.label), this.botService::sendWorkOutMenu);
+        chatIdActions.put(cmd -> cmd.equals(BotCommand.GYMNASTICS.label), this.botService::sendGymnasticsMenu);
+        chatIdActions.put(cmd -> cmd.equals(BotCommand.CITY.label), this.botService::sendCityMenu);
+        chatIdActions.put(cmd -> cmd.equals(BotCommand.PROMOTION_ACCEPT.label), this.botService::sendPromotionAcceptedMessage);
+        chatIdActions.put(cmd -> cmd.equals(BotCommand.CONSULTATION_WIKI.label), this.userService::sendConsultationWiki);
+        chatIdActions.put(cmd -> cmd.equals(BotCommand.CONSULTATION_ASK.label), this.userService::sendConsultationShortWikiAndSetUserResponseState);
+        chatIdActions.put(cmd -> cmd.equals(BotCommand.CONSULTATION_MENU.label), this.userService::sendConsultationMenu);
+        chatIdActions.put(cmd -> cmd.equals(BotCommand.SETTINGS.label), this.botService::sendSettingsMenu);
+        chatIdActions.put(cmd -> cmd.equals(BotCommand.INFO.label), this.botService::sendInfoMenu);
     }
 
     @Override

@@ -40,3 +40,7 @@ management:
       show-details: always
       probes:
         enabled: true
+
+logging:
+  level:
+    org.telegram.telegrambots.updatesreceivers.DefaultBotSession: INFO

@@ -32,6 +32,9 @@ public class CouponService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(CouponService.class);
 
+    public static final String COUPON_PREVIEW_BUTTON_CALLBACK_STRING = "couponPreview_";
+    public static final String COUPON_ACCEPT_BUTTON_CALLBACK_STRING = "couponAccept_";
+
     @Value("${hello-coupon.barcode}")
     private String helloCouponBarcode;
     @Value("${date-coupon.barcode}")
