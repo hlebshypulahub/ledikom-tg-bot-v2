@@ -19,6 +19,8 @@ public class PharmacyService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(PharmacyService.class);
 
+    public static final String PHARMACIES_BUTTON_CALLBACK_STRING = "pharmacies_";
+
     private final PharmacyRepository pharmacyRepository;
     private final BotUtilityService botUtilityService;
 

@@ -110,9 +110,9 @@ public class BotService {
     public void processWorkOutRequest(final String command, final Long chatId) {
         LOGGER.info("Processing work out request: {}", command);
 
-        WorkOutMenu workOutMenu = Arrays.stream(WorkOutMenu.values()).filter(e -> e.callbackDataString.equals(command)).findFirst().orElseThrow(() -> new RuntimeException("No work out menu found: " + command));
+        WorkOutMenuItem workOutMenuItem = Arrays.stream(WorkOutMenuItem.values()).filter(e -> e.callbackDataString.equals(command)).findFirst().orElseThrow(() -> new RuntimeException("No work out menu found: " + command));
 
-        sendMessageCallback.execute(botUtilityService.buildSendMessage(BotResponses.video(workOutMenu.videoLink), chatId));
+        sendMessageCallback.execute(botUtilityService.buildSendMessage(BotResponses.video(workOutMenuItem.videoLink), chatId));
 
         eventCollector.incrementWorkOut();
     }
@@ -120,9 +120,9 @@ public class BotService {
     public void processGymnasticsRequest(final String command, final Long chatId) {
         LOGGER.info("Processing gymnastics request: {}", command);
 
-        GymnasticsMenu gymnasticsMenu = Arrays.stream(GymnasticsMenu.values()).filter(e -> e.callbackDataString.equals(command)).findFirst().orElseThrow(() -> new RuntimeException("No gymnastics menu found: " + command));
+        GymnasticsMenuItem gymnasticsMenuItem = Arrays.stream(GymnasticsMenuItem.values()).filter(e -> e.callbackDataString.equals(command)).findFirst().orElseThrow(() -> new RuntimeException("No gymnastics menu found: " + command));
 
-        sendMessageCallback.execute(botUtilityService.buildSendMessage(BotResponses.video(gymnasticsMenu.videoLink), chatId));
+        sendMessageCallback.execute(botUtilityService.buildSendMessage(BotResponses.video(gymnasticsMenuItem.videoLink), chatId));
 
         eventCollector.incrementGymnastics();
     }
@@ -149,7 +149,7 @@ public class BotService {
         if (!userService.userExistsByChatId(chatId)) {
             userService.addNewUser(chatId);
             var sm = botUtilityService.buildSendMessage(BotResponses.startMessage(), chatId);
-            botUtilityService.addPreviewCouponButton(sm, couponService.getHelloCoupon(), "Активировать приветственный купон \uD83D\uDC4B");
+            botUtilityService.addHelloMessageButtons(sm, couponService.getHelloCoupon());
             sendMessageCallback.execute(sm);
 
             sm = botUtilityService.buildSendMessage(BotResponses.chooseYourCity(), chatId);
@@ -186,8 +186,8 @@ public class BotService {
         String couponTextWithBarcodeAndTimeSign = "Действителен до: *" + couponService.getTimeSign() + "*" + "\n\n" + coupon.getBarcode() + "\n\n" + coupon.getText();
 
         MessageIdInChat messageIdInChat = sendMessageWithPhotoCallback.execute(barcodeInputFile, BotResponses.initialCouponText(couponTextWithBarcodeAndTimeSign, couponDurationInMinutes), chatId);
-        LOGGER.info("Adding coupon to map: {}, {}", messageIdInChat, couponTextWithBarcodeAndTimeSign);
-        couponService.addCouponToMap(messageIdInChat, coupon.getName());
+        LOGGER.info("Adding coupon to map: {}, {}", messageIdInChat, coupon.getName());
+        couponService.addCouponToMap(messageIdInChat, couponTextWithBarcodeAndTimeSign);
         userService.markCouponAsUsedForUser(user, coupon);
 
         eventCollector.incrementCoupon();
@@ -236,5 +236,23 @@ public class BotService {
 
     public void sendBotDescription(final long chatId) {
         sendMessageCallback.execute(botUtilityService.buildSendMessage(BotResponses.botDescription(), chatId));
+    }
+
+    public void sendHealthBeingMenu(final long chatId) {
+        var sm = botUtilityService.buildSendMessage("Проводите время с пользой для здоровья \uD83D\uDC9A\uD83E\uDD0D\uD83D\uDC9A", chatId);
+        botUtilityService.addHealthBeingButtons(sm);
+        sendMessageCallback.execute(sm);
+    }
+
+    public void sendSettingsMenu(final long chatId) {
+        var sm = botUtilityService.buildSendMessage("Настройте полезные функции \uD83D\uDC9A\uD83E\uDD0D\uD83D\uDC9A", chatId);
+        botUtilityService.addSettingsButtons(sm);
+        sendMessageCallback.execute(sm);
+    }
+
+    public void sendInfoMenu(final long chatId) {
+        var sm = botUtilityService.buildSendMessage("Информация ❕", chatId);
+        botUtilityService.addInfoButtons(sm);
+        sendMessageCallback.execute(sm);
     }
 }

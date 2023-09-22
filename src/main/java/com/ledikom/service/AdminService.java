@@ -7,7 +7,7 @@ import com.ledikom.model.NewsFromAdmin;
 import com.ledikom.model.Pharmacy;
 import com.ledikom.model.PromotionFromAdmin;
 import com.ledikom.utils.AdminMessageToken;
-import com.ledikom.utils.BotCommands;
+import com.ledikom.utils.BotCommand;
 import jakarta.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -133,7 +133,7 @@ public class AdminService {
     private List<String> getSplitStringsFromAdminMessage(final String messageFromAdmin) {
         List<String> splitStringsFromAdminMessage = new ArrayList<>(Arrays.stream(messageFromAdmin.split(DELIMITER)).map(String::trim).toList());
 
-        if (splitStringsFromAdminMessage.size() == 1 && Stream.of(BotCommands.values()).noneMatch(botCommand -> splitStringsFromAdminMessage.get(0).startsWith(botCommand.label))) {
+        if (splitStringsFromAdminMessage.size() == 1 && Stream.of(BotCommand.values()).noneMatch(botCommand -> splitStringsFromAdminMessage.get(0).startsWith(botCommand.label))) {
             sendMessageCallback.execute(botUtilityService.buildSendMessage("Неверный формат команды! Не обнаруженно разделителя: *" + DELIMITER + "*", adminId));
             throw new RuntimeException("Invalid command format, no delimiter detected: " + DELIMITER);
         }

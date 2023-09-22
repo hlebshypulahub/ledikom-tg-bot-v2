@@ -386,11 +386,16 @@ public class UserService {
         sendMessageCallback.execute(sm);
     }
 
-    public void sendConsultationWikiAndSetUserResponseState(final long chatId) {
-        setUserState(chatId, UserResponseState.SENDING_QUESTION);
+    public void sendConsultationMenu(final long chatId) {
+        var sm = botUtilityService.buildSendMessage(BotResponses.consultationMenu(), chatId);
+        botUtilityService.addConsultationMenuButtons(sm);
+        sendMessageCallback.execute(sm);
+    }
 
-        userStatesToReset.put(chatId, LocalDateTime.now().plusMinutes(TO_RESET_AFTER_TIME_MIN));
-        sendMessageCallback.execute(botUtilityService.buildSendMessage(BotResponses.consultationWiki(), chatId));
+    public void sendConsultationWiki(final long chatId) {
+        var sm = botUtilityService.buildSendMessage(BotResponses.consultationWiki(), chatId);
+        botUtilityService.addRepeatConsultationButton(sm);
+        sendMessageCallback.execute(sm);
     }
 
     public void sendConsultationShortWikiAndSetUserResponseState(final long chatId) {

@@ -95,20 +95,20 @@ public class BotUtilityService {
 
     public void addMusicMenuButtonsToSendMessage(final SendMessage sm) {
         addButtonsToMessage(sm, 2,
-                Arrays.stream(MusicMenuButton.values()).map(value -> value.buttonText).collect(Collectors.toList()),
-                Arrays.stream(MusicMenuButton.values()).map(value -> value.callbackDataString).collect(Collectors.toList()));
+                Arrays.stream(MusicMenuItem.values()).map(value -> value.buttonText).collect(Collectors.toList()),
+                Arrays.stream(MusicMenuItem.values()).map(value -> value.callbackDataString).collect(Collectors.toList()));
     }
 
     public void addWorkOutMenuButtonsToSendMessage(final SendMessage sm) {
         addButtonsToMessage(sm, 2,
-                Arrays.stream(WorkOutMenu.values()).map(value -> value.buttonText).collect(Collectors.toList()),
-                Arrays.stream(WorkOutMenu.values()).map(value -> value.callbackDataString).collect(Collectors.toList()));
+                Arrays.stream(WorkOutMenuItem.values()).map(value -> value.buttonText).collect(Collectors.toList()),
+                Arrays.stream(WorkOutMenuItem.values()).map(value -> value.callbackDataString).collect(Collectors.toList()));
     }
 
     public void addGymnasticsMenuButtonsToSendMessage(final SendMessage sm) {
         addButtonsToMessage(sm, 2,
-                Arrays.stream(GymnasticsMenu.values()).map(value -> value.buttonText).collect(Collectors.toList()),
-                Arrays.stream(GymnasticsMenu.values()).map(value -> value.callbackDataString).collect(Collectors.toList()));
+                Arrays.stream(GymnasticsMenuItem.values()).map(value -> value.buttonText).collect(Collectors.toList()),
+                Arrays.stream(GymnasticsMenuItem.values()).map(value -> value.callbackDataString).collect(Collectors.toList()));
     }
 
     public void addMusicDurationButtonsToSendMessage(final SendMessage sm, String musicString) {
@@ -126,19 +126,49 @@ public class BotUtilityService {
     public void addPharmaciesFilterCitiesButtons(final SendMessage sm, final Set<City> cities) {
         addButtonsToMessage(sm, 2,
                 cities.stream().map(city -> city.label + " " + city.logo).collect(Collectors.toList()),
-                cities.stream().map(city -> "pharmacies_" + city.name()).collect(Collectors.toList()));
+                cities.stream().map(city -> PharmacyService.PHARMACIES_BUTTON_CALLBACK_STRING + city.name()).collect(Collectors.toList()));
+    }
+
+    public void addConsultationMenuButtons(final SendMessage sm) {
+        addButtonsToMessage(sm, 1,
+                List.of("\uD83D\uDCC3 Инструкция", "❓ Задать вопрос"),
+                List.of(BotCommand.CONSULTATION_WIKI.label, BotCommand.CONSULTATION_ASK.label));
+    }
+
+    public void addHealthBeingButtons(final SendMessage sm) {
+        addButtonsToMessage(sm, 1,
+                List.of("\uD83C\uDFB6 Музыка для сна", "\uD83C\uDFCB Утренняя зарядка", "\uD83D\uDE34 Вечерняя гимнастика"),
+                List.of(BotCommand.MUSIC.label, BotCommand.WORK_OUT.label, BotCommand.GYMNASTICS.label));
+    }
+
+    public void addSettingsButtons(final SendMessage sm) {
+        addButtonsToMessage(sm, 1,
+                List.of("\uD83C\uDFE5 Ваш город", "\uD83C\uDF81 Подарок в особенный день", "\uD83D\uDDD2 Вкл/Откл рассылку новостей"),
+                List.of(BotCommand.CITY.label, BotCommand.DATE.label, BotCommand.TRIGGER_NEWS.label));
+    }
+
+    public void addInfoButtons(final SendMessage sm) {
+        addButtonsToMessage(sm, 1,
+                List.of("\uD83C\uDFE5 Наши аптеки", "\uD83E\uDD16 Описание функций"),
+                List.of(BotCommand.PHARMACIES.label, BotCommand.DESCRIPTION.label));
+    }
+
+    public void addHelloMessageButtons(final SendMessage sm, final Coupon coupon) {
+        addButtonsToMessage(sm, 1,
+                List.of("Активировать приветственный купон \uD83D\uDC4B", "\uD83C\uDF81 Подарок в особенный день"),
+                List.of(CouponService.COUPON_PREVIEW_BUTTON_CALLBACK_STRING + coupon.getId(), BotCommand.DATE.label));
     }
 
     public void addAcceptCouponButton(final SendMessage sm, final Coupon coupon, final String buttonText) {
-        addButtonToMessage(sm, buttonText, "couponAccept_" + coupon.getId());
+        addButtonToMessage(sm, buttonText, CouponService.COUPON_ACCEPT_BUTTON_CALLBACK_STRING + coupon.getId());
     }
 
     public void addRepeatConsultationButton(final SendMessage sm) {
-        addButtonToMessage(sm, "Спросить еще раз", "consultation_repeat");
+        addButtonToMessage(sm, "❓ Задать следующий вопрос", BotCommand.CONSULTATION_ASK.label);
     }
 
     public void addPreviewCouponButton(final SendMessage sm, final Coupon coupon, final String buttonText) {
-        addButtonToMessage(sm, buttonText, "couponPreview_" + coupon.getId());
+        addButtonToMessage(sm, buttonText, CouponService.COUPON_PREVIEW_BUTTON_CALLBACK_STRING + coupon.getId());
     }
 
     public void addPromotionAcceptButton(final SendMessage sm) {
@@ -160,11 +190,11 @@ public class BotUtilityService {
             } else if (coupon.getBarcode().equals(refCouponBarcode)) {
                 prefix = "(" + ChronoUnit.DAYS.between(LocalDate.now(), user.getRefCouponExpiryDate()) + " д.) ";
             } else {
-                prefix = "(" + ChronoUnit.DAYS.between(LocalDate.now(), coupon.getEndDate())  + " д.)";
+                prefix = "(" + ChronoUnit.DAYS.between(LocalDate.now(), coupon.getEndDate()) + " д.)";
             }
 
             button.setText(prefix + coupon.getName());
-            button.setCallbackData("couponPreview_" + coupon.getId());
+            button.setCallbackData(CouponService.COUPON_PREVIEW_BUTTON_CALLBACK_STRING + coupon.getId());
             List<InlineKeyboardButton> row = new ArrayList<>();
             row.add(button);
             keyboard.add(row);
@@ -176,7 +206,7 @@ public class BotUtilityService {
     }
 
     public void addEditNoteButton(final SendMessage sm) {
-        addButtonToMessage(sm, "Редактировать \uD83D\uDD8D", "note_edit");
+        addButtonToMessage(sm, "Редактировать \uD83D\uDD8D", BotCommand.EDIT_NOTES.label);
     }
 
     private void addButtonsToMessage(final SendMessage sm, final int buttonsInRow, final List<String> buttonTextList, final List<String> callbackDataList) {
