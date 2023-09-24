@@ -115,7 +115,7 @@ public class EventCollector {
 
     public String messageToAdmin() {
         return "Счетчик новых событий:\n\n" +
-                coupon + " - Активированные купоны: " + "\n" +
+                coupon + " - Активированные купоны\n" +
                 consultation + " - Консультации\n" +
                 helloCoupon + " - Активированные приветственные купоны\n" +
                 dateCoupon + " - Активированные купоны Особенная Дата\n" +

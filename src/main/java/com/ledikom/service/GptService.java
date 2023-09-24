@@ -13,6 +13,9 @@ import org.springframework.http.ResponseEntity;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
 
+import java.util.concurrent.ExecutorService;
+import java.util.concurrent.Executors;
+
 @Service
 public class GptService {
 
@@ -25,11 +28,14 @@ public class GptService {
         this.restTemplate = restTemplate;
     }
 
-    public String getResponse(final String text) throws JsonProcessingException {
-        GptRequest gptRequest = new GptRequest();
-        gptRequest.getMessages().add(new GptMessage("user", text));
-
-        return getResponse(gptRequest);
+    public String getResponse(final String text) {
+        try {
+            GptRequest gptRequest = new GptRequest();
+            gptRequest.getMessages().add(new GptMessage("user", text));
+            return getResponse(gptRequest);
+        } catch (JsonProcessingException e) {
+            throw new RuntimeException("Error processing JSON", e);
+        }
     }
 
     private String getResponse(final GptRequest gptRequest) throws JsonProcessingException {

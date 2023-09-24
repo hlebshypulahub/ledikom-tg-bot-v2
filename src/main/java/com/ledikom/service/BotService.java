@@ -2,6 +2,7 @@ package com.ledikom.service;
 
 import com.ledikom.bot.LedikomBot;
 import com.ledikom.callback.SendMessageCallback;
+import com.ledikom.callback.SendMessageWithInputFileCallback;
 import com.ledikom.callback.SendMessageWithPhotoCallback;
 import com.ledikom.callback.SendMusicFileCallback;
 import com.ledikom.model.*;
@@ -16,8 +17,7 @@ import org.telegram.telegrambots.meta.api.methods.send.SendAudio;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.InputFile;
 
-import java.io.ByteArrayInputStream;
-import java.io.InputStream;
+import java.io.*;
 import java.time.LocalDateTime;
 import java.util.Arrays;
 import java.util.HashMap;
@@ -51,9 +51,9 @@ public class BotService {
     private final PharmacyService pharmacyService;
     private final LedikomBot ledikomBot;
 
-    private SendMessageWithPhotoCallback sendMessageWithPhotoCallback;
     private SendMessageCallback sendMessageCallback;
     private SendMusicFileCallback sendMusicFileCallback;
+    private SendMessageWithInputFileCallback sendMessageWithInputFileCallback;
 
     public BotService(final UserService userService, final CouponService couponService, final BotUtilityService botUtilityService, final PharmacyService pharmacyService, @Lazy final LedikomBot ledikomBot) {
         this.userService = userService;
@@ -65,9 +65,9 @@ public class BotService {
 
     @PostConstruct
     public void initCallbacks() {
-        this.sendMessageWithPhotoCallback = ledikomBot.getSendMessageWithPhotoCallback();
         this.sendMessageCallback = ledikomBot.getSendMessageCallback();
         this.sendMusicFileCallback = ledikomBot.getSendMusicFileCallback();
+        this.sendMessageWithInputFileCallback = ledikomBot.getSendMessageWithInputFileCallback();
         this.sendMessageCallback.execute(botUtilityService.buildSendMessage("Application started.", techAdminId));
         LOGGER.info("Application started.");
     }
@@ -100,7 +100,7 @@ public class BotService {
             String imageName = musicCallbackRequest.getStyleString() + ".jpg";
             InputStream audioInputStream = getClass().getResourceAsStream("/" + imageName);
             InputFile inputFile = new InputFile(audioInputStream, imageName);
-            sendMessageWithPhotoCallback.execute(inputFile, BotResponses.goodNight(), chatId);
+            sendMessageWithInputFileCallback.execute(inputFile, BotResponses.goodNight(), chatId);
             var sm = botUtilityService.buildSendMessage(BotResponses.musicDurationMenu(), chatId);
             botUtilityService.addMusicDurationButtonsToSendMessage(sm, command);
             sendMessageCallback.execute(sm);
@@ -185,7 +185,7 @@ public class BotService {
 
         String couponTextWithBarcodeAndTimeSign = "Действителен до: *" + couponService.getTimeSign() + "*" + "\n\n" + coupon.getBarcode() + "\n\n" + coupon.getText();
 
-        MessageIdInChat messageIdInChat = sendMessageWithPhotoCallback.execute(barcodeInputFile, BotResponses.initialCouponText(couponTextWithBarcodeAndTimeSign, couponDurationInMinutes), chatId);
+        MessageIdInChat messageIdInChat = sendMessageWithInputFileCallback.execute(barcodeInputFile, BotResponses.initialCouponText(couponTextWithBarcodeAndTimeSign, couponDurationInMinutes), chatId);
         LOGGER.info("Adding coupon to map: {}, {}", messageIdInChat, coupon.getName());
         couponService.addCouponToMap(messageIdInChat, couponTextWithBarcodeAndTimeSign);
         userService.markCouponAsUsedForUser(user, coupon);

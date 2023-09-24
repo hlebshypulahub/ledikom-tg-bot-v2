@@ -22,6 +22,7 @@ import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
+import java.util.Optional;
 import java.util.stream.Stream;
 
 @Service
@@ -63,7 +64,7 @@ public class AdminService {
         this.getFileFromBotCallback = ledikomBot.getGetFileFromBotCallback();
     }
 
-    public void processAdminRequest(final Update update) throws IOException {
+    public void processAdminRequest(final Update update) {
         if (update.hasMessage() && update.getMessage().hasPoll()) {
             executeAdminActionOnPollReceived(update.getMessage().getPoll());
         } else if (update.hasMessage()) {
@@ -75,37 +76,47 @@ public class AdminService {
         LOGGER.info("Processing admin poll request...");
         com.ledikom.model.Poll entityPoll = pollService.tgPollToLedikomPoll(poll);
         entityPoll.setLastVoteTimestamp(LocalDateTime.now());
-        com.ledikom.model.Poll savedPoll = pollService.savePoll(entityPoll);
-        LOGGER.info("Saved a poll:\n {}", savedPoll.toString());
+        entityPoll = pollService.savePoll(entityPoll);
+        LOGGER.info("Saved a poll:\n {}", entityPoll.toString());
         userService.sendPollToUsers(poll);
     }
 
-    public void executeAdminActionOnMessageReceived(final Message message) throws IOException {
+    public void executeAdminActionOnMessageReceived(final Message message) {
         LOGGER.info("Processing admin message request...");
 
-        String photoPath = null;
+        String photoPath = botUtilityService.getPhotoFromUpdate(message, getFileFromBotCallback);
+        List<String> splitStringsFromAdminMessage = getSplitStringsFromAdminMessage(getTextFromAdminMessage(message));
+        String label = splitStringsFromAdminMessage.get(0);
+        Optional<AdminMessageToken> tokenOptional = AdminMessageToken.getByLabel(label);
+
+        if (tokenOptional.isPresent() && adminCommandIsValid(tokenOptional.get(), splitStringsFromAdminMessage.size())) {
+            switch (tokenOptional.get()) {
+                case NEWS -> userService.sendNewsToUsers(getNewsByAdmin(splitStringsFromAdminMessage, photoPath));
+                case PROMOTION -> userService.sendPromotionToUsers(getPromotionFromAdmin(splitStringsFromAdminMessage, photoPath));
+                case COUPON -> couponService.createAndSendNewCoupon(splitStringsFromAdminMessage, photoPath);
+            }
+        } else {
+            sendMessageCallback.execute(botUtilityService.buildSendMessage("Неверный формат команды! Нет такого действия: " + label, adminId));
+            LOGGER.error("Invalid command, no such actions: " + label);
+        }
+    }
+
+    private String getTextFromAdminMessage(final Message message) {
+        String text = null;
+
         if (botUtilityService.messageHasPhoto(message)) {
-            photoPath = botUtilityService.getPhotoFromUpdate(message, getFileFromBotCallback);
-            LOGGER.info("Photo path received: {}", photoPath);
+            text = message.getCaption();
+        } else if (message.hasText()) {
+            text = message.getText();
         }
 
-        String text = getTextFromAdminMessage(message);
-
-        List<String> splitStringsFromAdminMessage = getSplitStringsFromAdminMessage(text);
-
-        if (splitStringsFromAdminMessage.get(0).equalsIgnoreCase(AdminMessageToken.NEWS.label)) {
-            if (adminCommandIsValid(AdminMessageToken.NEWS, splitStringsFromAdminMessage.size())) {
-                userService.sendNewsToUsers(getNewsByAdmin(splitStringsFromAdminMessage, photoPath));
-            }
-        } else if (splitStringsFromAdminMessage.get(0).equalsIgnoreCase(AdminMessageToken.PROMOTION.label)) {
-            if (adminCommandIsValid(AdminMessageToken.PROMOTION, splitStringsFromAdminMessage.size())) {
-                userService.sendPromotionToUsers(getPromotionFromAdmin(splitStringsFromAdminMessage, photoPath));
-            }
-        } else if (splitStringsFromAdminMessage.get(0).equalsIgnoreCase(AdminMessageToken.COUPON.label)) {
-            if (adminCommandIsValid(AdminMessageToken.COUPON, splitStringsFromAdminMessage.size())) {
-                couponService.createAndSendNewCoupon(photoPath, splitStringsFromAdminMessage);
-            }
+        if (text != null && !text.isBlank()) {
+            LOGGER.info("Text received from message:\n{}", text);
+            return text;
         }
+
+        sendMessageCallback.execute(botUtilityService.buildSendMessage("Неверный формат команды! Сообщение не может быть пустым!", adminId));
+        throw new RuntimeException("Invalid command from admin, message cannot be blank");
     }
 
     private boolean adminCommandIsValid(final AdminMessageToken adminMessageToken, final int splitStringsSize) {
@@ -117,22 +128,10 @@ public class AdminService {
         }
     }
 
-    private String getTextFromAdminMessage(final Message message) {
-        if (botUtilityService.messageHasPhoto(message) && message.getCaption() != null && !message.getCaption().isBlank()) {
-            LOGGER.info("Text received from caption:\n{}", message.getCaption());
-            return message.getCaption();
-        } else if (message.hasText() && message.getText() != null && !message.getText().isBlank()) {
-            LOGGER.info("Text received from message:\n{}", message.getText());
-            return message.getText();
-        } else {
-            sendMessageCallback.execute(botUtilityService.buildSendMessage("Неверный формат команды! Сообщение не может быть пустым!", adminId));
-            throw new RuntimeException("Invalid command from admin, message cannot be blank");
-        }
-    }
-
     private List<String> getSplitStringsFromAdminMessage(final String messageFromAdmin) {
         List<String> splitStringsFromAdminMessage = new ArrayList<>(Arrays.stream(messageFromAdmin.split(DELIMITER)).map(String::trim).toList());
 
+        // no need in second part in if
         if (splitStringsFromAdminMessage.size() == 1 && Stream.of(BotCommand.values()).noneMatch(botCommand -> splitStringsFromAdminMessage.get(0).startsWith(botCommand.label))) {
             sendMessageCallback.execute(botUtilityService.buildSendMessage("Неверный формат команды! Не обнаруженно разделителя: *" + DELIMITER + "*", adminId));
             throw new RuntimeException("Invalid command format, no delimiter detected: " + DELIMITER);

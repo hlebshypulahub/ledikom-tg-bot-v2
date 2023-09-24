@@ -4,6 +4,6 @@ import com.ledikom.model.MessageIdInChat;
 import org.telegram.telegrambots.meta.api.objects.InputFile;
 
 @FunctionalInterface
-public interface SendMessageWithPhotoCallback {
-    MessageIdInChat execute(String photoPath, String caption, Long chatId);
+public interface SendMessageWithInputFileCallback {
+    MessageIdInChat execute(InputFile inputFile, String caption, Long chatId);
 }

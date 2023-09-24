@@ -12,6 +12,7 @@ import org.telegram.telegrambots.meta.api.methods.GetFile;
 import org.telegram.telegrambots.meta.api.methods.polls.SendPoll;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
 import org.telegram.telegrambots.meta.api.objects.File;
+import org.telegram.telegrambots.meta.api.objects.InputFile;
 import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.PhotoSize;
 import org.telegram.telegrambots.meta.api.objects.polls.Poll;
@@ -20,6 +21,9 @@ import org.telegram.telegrambots.meta.api.objects.replykeyboard.InlineKeyboardMa
 import org.telegram.telegrambots.meta.api.objects.replykeyboard.buttons.InlineKeyboardButton;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
+import java.io.IOException;
+import java.io.InputStream;
+import java.net.URL;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.*;
@@ -66,6 +70,16 @@ public class BotUtilityService {
         }
 
         return null;
+    }
+
+    public InputFile getPhotoInputFile(final String photoPath) {
+        try {
+            InputStream imageStream = new URL(photoPath).openStream();
+            return new InputFile(imageStream, "image.jpg");
+        } catch (IOException e) {
+            LOGGER.error(e.getMessage());
+            throw new RuntimeException("Something wrong with image processing", e);
+        }
     }
 
     public boolean messageHasPhoto(final Message message) {
@@ -155,7 +169,7 @@ public class BotUtilityService {
 
     public void addHelloMessageButtons(final SendMessage sm, final Coupon coupon) {
         addButtonsToMessage(sm, 1,
-                List.of("Активировать приветственный купон \uD83D\uDC4B", "\uD83C\uDF81 Подарок в особенный день"),
+                List.of("Активировать приветственный купон \uD83D\uDC4B", "Подарок в особенный день \uD83C\uDF81"),
                 List.of(CouponService.COUPON_PREVIEW_BUTTON_CALLBACK_STRING + coupon.getId(), BotCommand.DATE.label));
     }
 
@@ -164,7 +178,7 @@ public class BotUtilityService {
     }
 
     public void addRepeatConsultationButton(final SendMessage sm) {
-        addButtonToMessage(sm, "❓ Задать следующий вопрос", BotCommand.CONSULTATION_ASK.label);
+        addButtonToMessage(sm, "❓ Задать вопрос", BotCommand.CONSULTATION_ASK.label);
     }
 
     public void addPreviewCouponButton(final SendMessage sm, final Coupon coupon, final String buttonText) {
