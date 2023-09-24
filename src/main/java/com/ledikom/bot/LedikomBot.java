@@ -24,7 +24,6 @@ import org.telegram.telegrambots.meta.api.objects.Message;
 import org.telegram.telegrambots.meta.api.objects.Update;
 import org.telegram.telegrambots.meta.exceptions.TelegramApiException;
 
-import java.io.IOException;
 import java.util.*;
 import java.util.function.Predicate;
 
@@ -37,20 +36,22 @@ public class LedikomBot extends TelegramLongPollingBot {
     @Value("${bot.token}")
     private String botToken;
     @Value("${admin.id}")
-    private Long adminId;
+    private long adminId;
 
     private final BotService botService;
     private final UserService userService;
     private final AdminService adminService;
+    private final BotUtilityService botUtilityService;
 
     private static final Logger LOGGER = LoggerFactory.getLogger(LedikomBot.class);
     private static final Map<Predicate<String>, ChatIdCallback> chatIdActions = new HashMap<>();
     private static final Map<Predicate<String>, CommandWithChatIdCallback> commandWithChatIdActions = new HashMap<>();
 
-    public LedikomBot(@Lazy final BotService botService, @Lazy final UserService userService, @Lazy final AdminService adminService) {
+    public LedikomBot(@Lazy final BotService botService, @Lazy final UserService userService, @Lazy final AdminService adminService, final BotUtilityService botUtilityService) {
         this.botService = botService;
         this.userService = userService;
         this.adminService = adminService;
+        this.botUtilityService = botUtilityService;
     }
 
     @PostConstruct
@@ -89,66 +90,57 @@ public class LedikomBot extends TelegramLongPollingBot {
 
         if (update.hasMessage()) {
             var msg = update.getMessage();
-            var chatId = msg.getChatId();
-            boolean userIsInActiveState = false;
+            long chatId = msg.getChatId();
+            boolean messageProcessed = false;
             if (msg.hasText()) {
-                try {
-                    userIsInActiveState = processMessage(msg.getText(), chatId);
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
+                messageProcessed = processMessage(msg.getText(), chatId);
             }
-            if (Objects.equals(chatId, adminId) && !userIsInActiveState) {
-                try {
-                    adminService.processAdminRequest(update);
-                } catch (IOException e) {
-                    throw new RuntimeException(e);
-                }
+            if (chatId == adminId && !messageProcessed) {
+                adminService.processAdminRequest(update);
             }
+
         } else if (update.hasCallbackQuery()) {
             var qry = update.getCallbackQuery();
             var chatId = qry.getMessage().getChatId();
-            try {
-                processMessage(qry.getData(), chatId);
-            } catch (IOException e) {
-                throw new RuntimeException(e);
-            }
+            processMessage(qry.getData(), chatId);
+
         } else if (update.hasPoll()) {
             userService.processPoll(update.getPoll());
         }
     }
 
-    private boolean processMessage(String command, Long chatId) throws IOException {
-        boolean processed = false;
-
-        Optional<ChatIdCallback> chatIdCallback = chatIdActions.entrySet().stream()
+    private boolean processChatIdActions(final String command, final long chatId) {
+        return chatIdActions.entrySet().stream()
                 .filter(entry -> entry.getKey().test(command))
-                .map(Map.Entry::getValue)
-                .findFirst();
-        boolean isChatIdAction = chatIdCallback.isPresent();
-        if (isChatIdAction) {
-            chatIdCallback.get().execute(chatId);
-            processed = true;
-        } else {
-            Optional<CommandWithChatIdCallback> commandWithChatIdCallback = commandWithChatIdActions.entrySet().stream()
-                    .filter(entry -> entry.getKey().test(command))
-                    .map(Map.Entry::getValue)
-                    .findFirst();
-            boolean isCommandWithChatIdAction = commandWithChatIdCallback.isPresent();
+                .findFirst()
+                .map(entry -> {
+                    entry.getValue().execute(chatId);
+                    return true;
+                })
+                .orElse(false);
+    }
 
-            if (isCommandWithChatIdAction) {
-                commandWithChatIdCallback.get().execute(command, chatId);
-                processed = true;
-            }
+    private boolean processCommandWithChatIdActions(final String command, final long chatId) {
+        return commandWithChatIdActions.entrySet().stream()
+                .filter(entry -> entry.getKey().test(command))
+                .findFirst()
+                .map(entry -> {
+                    entry.getValue().execute(command, chatId);
+                    return true;
+                })
+                .orElse(false);
+    }
+
+    private boolean processMessage(String command, Long chatId) {
+        if (processChatIdActions(command, chatId) || processCommandWithChatIdActions(command, chatId)) {
+            return true;
         }
 
-        boolean userIsInActiveState = userService.userIsInActiveState(chatId);
-
-        if (!processed && userIsInActiveState) {
-            userService.processStatefulUserResponse(command, chatId);
+        if (userService.userIsInActiveState(chatId)) {
+            return userService.processStatefulUserResponse(command, chatId);
         }
 
-        return userIsInActiveState;
+        return false;
     }
 
     public SendMessageWithPhotoCallback getSendMessageWithPhotoCallback() {
@@ -179,6 +171,10 @@ public class LedikomBot extends TelegramLongPollingBot {
         return this::editImageCaptionByMessageId;
     }
 
+    public SendMessageWithInputFileCallback getSendMessageWithInputFileCallback() {
+        return this::sendImageWithCaption;
+    }
+
     @Override
     public String getBotUsername() {
         return botUsername;
@@ -191,6 +187,21 @@ public class LedikomBot extends TelegramLongPollingBot {
 
     private File getFileFromBot(final GetFile getFileRequest) throws TelegramApiException {
         return execute(getFileRequest);
+    }
+
+    private MessageIdInChat sendImageWithCaption(final String photoPath, final String caption, final Long chatId) {
+        try {
+            SendPhoto sendPhoto = new SendPhoto();
+            sendPhoto.setChatId(chatId.toString());
+            sendPhoto.setPhoto(botUtilityService.getPhotoInputFile(photoPath));
+            sendPhoto.setCaption(caption);
+            sendPhoto.setParseMode("Markdown");
+            Message sentMessage = execute(sendPhoto);
+            return new MessageIdInChat(sentMessage.getChatId(), sentMessage.getMessageId());
+        } catch (TelegramApiException e) {
+            LOGGER.trace(e.getMessage());
+            return null;
+        }
     }
 
     private MessageIdInChat sendImageWithCaption(final InputFile inputFile, final String caption, final Long chatId) {

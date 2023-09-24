@@ -81,7 +81,7 @@ public final class BotResponses {
     }
 
     public static String referralMessage(final String refLink, final int referralCount, final Coupon coupon) {
-        return "Ваша реферальная ссылка:\n\n\n" + "`" + refLink + "`\n\n\n*Количество приглашенных вами пользователей:   "
+        return "Ваша реферальная ссылка:\n\n\n" + "[" + refLink + "](" + refLink + ")\n\n\n*Количество приглашенных вами пользователей:   "
                 + referralCount + "*\n\n\nПоделитесь ссылкой (скопируйте и отправьте вашим контактам) и получайте бонусы!\n\n"
                 + "\uD83E\uDD47 за каждые 10 приглашенных: \n*" + coupon.getName() + "\n" + coupon.getText() + "*";
     }
@@ -199,7 +199,7 @@ public final class BotResponses {
     }
 
     public static String addSpecialDate() {
-        return "\uD83D\uDCC6 Вы можете указать вашу особенную дату, в этот день вы получите подарок от сети аптек \"Ледиком\"!\n\n*Введите и отправьте сообщение в следующем цифровом формате:\n\nдень.месяц*";
+        return "\uD83D\uDCC6 Вы можете указать вашу особенную дату, в этот день вы получите подарок от сети аптек \"Ледиком\"!\n\n*Введите и отправьте сообщение в следующем цифровом формате:\n\nдень.месяц* (пример - *07.10*)";
     }
 
     public static String yourSpecialDate(final LocalDateTime specialDate) {

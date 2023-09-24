@@ -16,15 +16,12 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Lazy;
 import org.springframework.stereotype.Service;
 import org.telegram.telegrambots.meta.api.methods.send.SendMessage;
-import org.telegram.telegrambots.meta.api.objects.InputFile;
 import org.telegram.telegrambots.meta.api.objects.polls.Poll;
 
-import java.io.IOException;
-import java.io.InputStream;
-import java.net.URL;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import java.util.stream.IntStream;
 
 @Service
@@ -107,13 +104,14 @@ public class UserService {
         }
     }
 
-    public void processStatefulUserResponse(final String text, final Long chatId) {
+    public boolean processStatefulUserResponse(final String text, final Long chatId) {
         User user = findByChatId(chatId);
         if (user.getResponseState() == UserResponseState.SENDING_NOTE) {
             user.setNote(text);
             setUserState(user, UserResponseState.NONE);
             sendMessageCallback.execute(botUtilityService.buildSendMessage(BotResponses.noteAdded(), chatId));
             BotService.eventCollector.incrementNote();
+            return true;
         } else if (user.getResponseState() == UserResponseState.SENDING_DATE) {
             try {
                 String[] splitDateString = text.trim().split("\\.");
@@ -132,8 +130,9 @@ public class UserService {
                 }
 
                 BotService.eventCollector.incrementDate();
+                return true;
             } catch (RuntimeException e) {
-                sendMessageCallback.execute(botUtilityService.buildSendMessage("❗Неверный формат даты, введите сообщение в цифровом формате:\n\nдень.месяц", chatId));
+                sendMessageCallback.execute(botUtilityService.buildSendMessage("❗Неверный формат даты, введите сообщение в цифровом формате:\n\nдень.месяц (пример - *07.10*)", chatId));
                 throw new RuntimeException("Invalid special date format: " + text);
             }
         } else if (user.getResponseState() == UserResponseState.SENDING_QUESTION) {
@@ -143,26 +142,29 @@ public class UserService {
             } else {
                 setUserState(user, UserResponseState.NONE);
                 sendMessageCallback.execute(botUtilityService.buildSendMessage(BotResponses.waitForGptResponse(), chatId));
-                String gptResponse;
-                try {
-                    LOGGER.info("Calling gpt API...");
-                    gptResponse = gptService.getResponse(text);
-                } catch (Exception e) {
-                    gptResponse = "Консультация недоступна, повторите попытку позже.";
-                    e.printStackTrace();
-                }
-                if (gptResponse.toLowerCase().contains(GptMessage.NON_RELATED_RESPONSE_TOKEN)) {
-                    var sm = botUtilityService.buildSendMessage("Извините, но я не могу понять ваш вопрос. Пожалуйста, задайте более конкретный вопрос, связанный с медициной или здоровьем.", chatId);
+                CompletableFuture.supplyAsync(() -> {
+                    LOGGER.info("Calling GPT API...");
+                    String gptResponse;
+                    try {
+                        gptResponse = gptService.getResponse(text);
+                        if (gptResponse.toLowerCase().contains(GptMessage.NON_RELATED_RESPONSE_TOKEN)) {
+                            throw new IllegalArgumentException("Question is not on medicine&health topic");
+                        }
+                    } catch (IllegalArgumentException e) {
+                        return "Извините, но я не могу понять ваш вопрос. Пожалуйста, задайте более конкретный вопрос, связанный с медициной или здоровьем.";
+                    } catch (RuntimeException e) {
+                        return "Консультация недоступна, повторите попытку позже.";
+                    }
+                    return gptResponse;
+                }).thenAcceptAsync(gptResponse -> {
+                    var sm = botUtilityService.buildSendMessage(gptResponse, chatId);
                     botUtilityService.addRepeatConsultationButton(sm);
                     sendMessageCallback.execute(sm);
-                    throw new RuntimeException("Question is not on medicine&health topic");
-                }
-                var sm = botUtilityService.buildSendMessage(gptResponse, chatId);
-                botUtilityService.addRepeatConsultationButton(sm);
-                sendMessageCallback.execute(sm);
-                LOGGER.info("Вопрос: " + text);
-                LOGGER.info("Ответ: " + gptResponse);
-                BotService.eventCollector.incrementConsultation();
+                    LOGGER.info("Вопрос: " + text);
+                    LOGGER.info("Ответ: " + gptResponse);
+                    BotService.eventCollector.incrementConsultation();
+                });
+                return true;
             }
         } else {
             sendMessageCallback.execute(botUtilityService.buildSendMessage("Нет такой команды!", chatId));
@@ -295,7 +297,7 @@ public class UserService {
         return findAllUsers().stream().filter(user -> user.getCity() == null || pharmacies.stream().map(Pharmacy::getCity).toList().contains(user.getCity())).toList();
     }
 
-    public void sendNewsToUsers(final NewsFromAdmin newsFromAdmin) throws IOException {
+    public void sendNewsToUsers(final NewsFromAdmin newsFromAdmin) {
         LOGGER.info("Sending news to users");
 
         List<User> usersToSendNews = findAllUsersToSendNews();
@@ -303,21 +305,17 @@ public class UserService {
         if (newsFromAdmin.getPhotoPath() == null) {
             usersToSendNews.forEach(user -> sendMessageCallback.execute(botUtilityService.buildSendMessage(newsFromAdmin.getText(), user.getChatId())));
         } else {
-            InputStream imageStream = new URL(newsFromAdmin.getPhotoPath()).openStream();
-            InputFile inputFile = new InputFile(imageStream, "image.jpg");
-            usersToSendNews.forEach(user -> sendMessageWithPhotoCallback.execute(inputFile, newsFromAdmin.getText(), user.getChatId()));
+            usersToSendNews.forEach(user -> sendMessageWithPhotoCallback.execute(newsFromAdmin.getPhotoPath(), newsFromAdmin.getText(), user.getChatId()));
         }
     }
 
-    public void sendPromotionToUsers(final PromotionFromAdmin promotionFromAdmin) throws IOException {
+    public void sendPromotionToUsers(final PromotionFromAdmin promotionFromAdmin) {
         LOGGER.info("Sending promotion to users");
 
         List<User> usersToSendPromotion = filterUsersToSendNews(findAllUsersByPharmaciesCities(new HashSet<>(promotionFromAdmin.getPharmacies())));
 
         if (promotionFromAdmin.getPhotoPath() != null) {
-            InputStream imageStream = new URL(promotionFromAdmin.getPhotoPath()).openStream();
-            InputFile inputFile = new InputFile(imageStream, "image.jpg");
-            usersToSendPromotion.forEach(user -> sendMessageWithPhotoCallback.execute(inputFile, "", user.getChatId()));
+            usersToSendPromotion.forEach(user -> sendMessageWithPhotoCallback.execute(promotionFromAdmin.getPhotoPath(), "", user.getChatId()));
         }
 
         usersToSendPromotion.forEach(user -> {

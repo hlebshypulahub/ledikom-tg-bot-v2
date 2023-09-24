@@ -133,7 +133,7 @@ public class CouponService {
         userCoupons.put(messageIdInChat, userCouponRecord);
     }
 
-    public void createAndSendNewCoupon(final String photoPath, final List<String> splitStringsFromAdminMessage) throws IOException {
+    public void createAndSendNewCoupon(final List<String> splitStringsFromAdminMessage, final String photoPath) {
         LOGGER.info("Creating new coupon");
 
         Coupon coupon = getNewValidCoupon(splitStringsFromAdminMessage);
@@ -154,11 +154,9 @@ public class CouponService {
         }
     }
 
-    private void sendCouponNewsToUsers(final Coupon coupon, final List<User> users, final String photoPath) throws IOException {
+    private void sendCouponNewsToUsers(final Coupon coupon, final List<User> users, final String photoPath) {
         if (photoPath != null) {
-            InputStream imageStream = new URL(photoPath).openStream();
-            InputFile inputFile = new InputFile(imageStream, "image.jpg");
-            users.forEach(user -> sendMessageWithPhotoCallback.execute(inputFile, "", user.getChatId()));
+            users.forEach(user -> sendMessageWithPhotoCallback.execute(photoPath, "", user.getChatId()));
         }
         sendCouponNewsToUsers(coupon, users);
     }
