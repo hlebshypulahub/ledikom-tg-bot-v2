@@ -216,7 +216,7 @@ public class UserService {
         if (!selfLinkOrUserExists) {
             User user = findByChatId(chatIdFromRefLink);
             user.setReferralCount(user.getReferralCount() + 1);
-            sendMessageCallback.execute(botUtilityService.buildSendMessage("\uD83D\uDCF2 Кто-то воспользовался вашей реферальной ссылкой!\n\n\n" + BotResponses.referralMessage(getRefLink(chatIdFromRefLink), user.getReferralCount(),
+            sendMessageCallback.execute(botUtilityService.buildSendMessage("\uD83D\uDCF2 Спасибо, что пригласили нового пользователя!\n\n\n" + BotResponses.referralMessage(getRefLink(chatIdFromRefLink), user.getReferralCount(),
                     couponService.getRefCoupon()), chatIdFromRefLink));
             couponService.addRefCouponToUser(user);
             userRepository.save(user);
