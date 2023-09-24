@@ -73,23 +73,6 @@ public class CouponService {
         this.sendMessageWithPhotoCallback = ledikomBot.getSendMessageWithPhotoCallback();
     }
 
-    private void saveStaleCoupons() {
-        List<Coupon> couponsToSave = new ArrayList<>();
-        if (couponRepository.findByBarcode(helloCouponBarcode).isEmpty()) {
-            couponsToSave.add(getNewValidCoupon(List.of("coupon", helloCouponBarcode, "", "", "Приветственный купон -5% \uD83D\uDC4B",
-                    "Здоровье – важнейшая ценность! С этим купоном вы получаете *5%* скидку на любой товар из нашего ассортимента!", "")));
-        }
-        if (couponRepository.findByBarcode(dateCouponBarcode).isEmpty()) {
-            couponsToSave.add(getNewValidCoupon(List.of("coupon", dateCouponBarcode, "", "", "Купон к Особому Дню -5% \uD83D\uDCC6",
-                    "Специальное предложение для особенного момента. Отмечайте с нами и экономьте! С этим купоном вы получаете *5%* скидку на любой товар из нашего ассортимента!", "")));
-        }
-        if (couponRepository.findByBarcode(refCouponBarcode).isEmpty()) {
-            couponsToSave.add(getNewValidCoupon(List.of("coupon", refCouponBarcode, "", "", "Купон за приглашенных друзей -5% 👫",
-                    "Ваши друзья - наши друзья! С этим купоном вы получаете *5%* скидку на любой товар из нашего ассортимента!", "")));
-        }
-        couponRepository.saveAll(couponsToSave);
-    }
-
     public Coupon findCouponForUser(final User user, final String couponCommand) {
         int couponId = Integer.parseInt(couponCommand.split("_")[1]);
         LOGGER.info("Looking for a coupon: {}", couponId);
