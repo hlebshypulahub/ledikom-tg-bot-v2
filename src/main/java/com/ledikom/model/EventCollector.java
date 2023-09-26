@@ -17,6 +17,7 @@ public class EventCollector {
     private int coupon;
     private int helloCoupon;
     private int dateCoupon;
+    private int refCoupon;
     private int refLink;
     private int music;
     private int newUser;
@@ -35,6 +36,7 @@ public class EventCollector {
         coupon = 0;
         helloCoupon = 0;
         dateCoupon = 0;
+        refCoupon = 0;
         refLink = 0;
         music = 0;
         newUser = 0;
@@ -55,6 +57,10 @@ public class EventCollector {
 
     public void incrementHelloCoupon() {
         helloCoupon = helloCoupon + 1;
+    }
+
+    public void incrementRefCoupon() {
+        refCoupon = refCoupon + 1;
     }
 
     public void incrementDateCoupon() {
@@ -116,9 +122,10 @@ public class EventCollector {
     public String messageToAdmin() {
         return "Счетчик новых событий:\n\n" +
                 coupon + " - Активированные купоны\n" +
+                helloCoupon + " - Приветственный купон\n" +
+                dateCoupon + " - Особенная Дата купон\n" +
+                refCoupon + " - Приглашение купон\n" +
                 consultation + " - Консультации\n" +
-                helloCoupon + " - Активированные приветственные купоны\n" +
-                dateCoupon + " - Активированные купоны Особенная Дата\n" +
                 refLink + " - Переход по реферальной ссылке\n" +
                 music + " - Музыка для сна\n" +
                 gymnastics + " - Вечерняя гимнастика\n" +

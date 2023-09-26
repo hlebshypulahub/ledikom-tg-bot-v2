@@ -131,8 +131,7 @@ public class AdminService {
     private List<String> getSplitStringsFromAdminMessage(final String messageFromAdmin) {
         List<String> splitStringsFromAdminMessage = new ArrayList<>(Arrays.stream(messageFromAdmin.split(DELIMITER)).map(String::trim).toList());
 
-        // no need in second part in if
-        if (splitStringsFromAdminMessage.size() == 1 && Stream.of(BotCommand.values()).noneMatch(botCommand -> splitStringsFromAdminMessage.get(0).startsWith(botCommand.label))) {
+        if (splitStringsFromAdminMessage.size() == 1) {
             sendMessageCallback.execute(botUtilityService.buildSendMessage("Неверный формат команды! Не обнаруженно разделителя: *" + DELIMITER + "*", adminId));
             throw new RuntimeException("Invalid command format, no delimiter detected: " + DELIMITER);
         }

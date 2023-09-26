@@ -3,7 +3,6 @@ package com.ledikom.service;
 import com.ledikom.bot.LedikomBot;
 import com.ledikom.callback.SendMessageCallback;
 import com.ledikom.callback.SendMessageWithInputFileCallback;
-import com.ledikom.callback.SendMessageWithPhotoCallback;
 import com.ledikom.callback.SendMusicFileCallback;
 import com.ledikom.model.*;
 import com.ledikom.utils.*;
@@ -38,6 +37,8 @@ public class BotService {
     private String helloCouponBarcode;
     @Value("${date-coupon.barcode}")
     private String dateCouponBarcode;
+    @Value("${ref-coupon.barcode}")
+    private String refCouponBarcode;
     @Value("${coupon.duration-minutes}")
     private int couponDurationInMinutes;
     @Value("${admin.id}")
@@ -69,19 +70,19 @@ public class BotService {
         this.sendMusicFileCallback = ledikomBot.getSendMusicFileCallback();
         this.sendMessageWithInputFileCallback = ledikomBot.getSendMessageWithInputFileCallback();
         this.sendMessageCallback.execute(botUtilityService.buildSendMessage("Application started.", techAdminId));
-        LOGGER.info("Application started.");
     }
 
     public void processStartOrRefLinkFollow(final String command, final Long chatId) {
-        if (!command.endsWith("/start")) {
+        boolean isRefLink = !command.endsWith(BotCommand.START.label);
+        if (isRefLink) {
             LOGGER.info("Processing ref link following: {}", command);
             String refCode = command.substring(7);
-            userService.addNewRefUser(Long.parseLong(refCode), chatId);
+            userService.incrementUserRefCounter(Long.parseLong(refCode), chatId);
         }
         addUserAndSendHelloMessage(chatId);
     }
 
-    public void processMusicRequest(final String command, final Long chatId) {
+    public void processMusicRequest(final String command, final long chatId) {
         LOGGER.info("Processing music request: {}", command);
 
         MusicCallbackRequest musicCallbackRequest = UtilityHelper.getMusicCallbackRequest(command);
@@ -91,15 +92,15 @@ public class BotService {
             InputStream audioInputStream = getClass().getResourceAsStream("/" + audioFileName);
             InputFile audioInputFile = new InputFile(audioInputStream, audioFileName);
             SendAudio sendAudio = new SendAudio(String.valueOf(chatId), audioInputFile);
-            LocalDateTime toDeleteTimestamp = LocalDateTime.now().plusMinutes(musicCallbackRequest.getDuration());
+            LocalDateTime toDeleteTimestamp = LocalDateTime.now().plusMinutes(musicCallbackRequest.getDuration()).plusSeconds(30);
             MessageIdInChat messageIdInChatMusic = sendMusicFileCallback.execute(sendAudio);
             LOGGER.info("Message to delete put to map: {}, {}", messageIdInChatMusic, toDeleteTimestamp);
             messagesToDeleteMap.put(messageIdInChatMusic, toDeleteTimestamp);
             eventCollector.incrementMusic();
         } else {
             String imageName = musicCallbackRequest.getStyleString() + ".jpg";
-            InputStream audioInputStream = getClass().getResourceAsStream("/" + imageName);
-            InputFile inputFile = new InputFile(audioInputStream, imageName);
+            InputStream inputStream = getClass().getResourceAsStream("/" + imageName);
+            InputFile inputFile = new InputFile(inputStream, imageName);
             sendMessageWithInputFileCallback.execute(inputFile, BotResponses.goodNight(), chatId);
             var sm = botUtilityService.buildSendMessage(BotResponses.musicDurationMenu(), chatId);
             botUtilityService.addMusicDurationButtonsToSendMessage(sm, command);
@@ -110,7 +111,10 @@ public class BotService {
     public void processWorkOutRequest(final String command, final Long chatId) {
         LOGGER.info("Processing work out request: {}", command);
 
-        WorkOutMenuItem workOutMenuItem = Arrays.stream(WorkOutMenuItem.values()).filter(e -> e.callbackDataString.equals(command)).findFirst().orElseThrow(() -> new RuntimeException("No work out menu found: " + command));
+        WorkOutMenuItem workOutMenuItem = Arrays.stream(WorkOutMenuItem.values())
+                .filter(value -> value.callbackDataString.equals(command))
+                .findFirst()
+                .orElseThrow(() -> new RuntimeException("No work out menu item found: " + command));
 
         sendMessageCallback.execute(botUtilityService.buildSendMessage(BotResponses.video(workOutMenuItem.videoLink), chatId));
 
@@ -120,7 +124,10 @@ public class BotService {
     public void processGymnasticsRequest(final String command, final Long chatId) {
         LOGGER.info("Processing gymnastics request: {}", command);
 
-        GymnasticsMenuItem gymnasticsMenuItem = Arrays.stream(GymnasticsMenuItem.values()).filter(e -> e.callbackDataString.equals(command)).findFirst().orElseThrow(() -> new RuntimeException("No gymnastics menu found: " + command));
+        GymnasticsMenuItem gymnasticsMenuItem = Arrays.stream(GymnasticsMenuItem.values())
+                .filter(value -> value.callbackDataString.equals(command))
+                .findFirst()
+                .orElseThrow(() -> new RuntimeException("No gymnastics menu found: " + command));
 
         sendMessageCallback.execute(botUtilityService.buildSendMessage(BotResponses.video(gymnasticsMenuItem.videoLink), chatId));
 
@@ -160,15 +167,15 @@ public class BotService {
         }
     }
 
-    public void sendCouponAcceptMessage(final String couponCommand, final long chatId) {
+    public void sendCouponToAcceptMessage(final String couponCommand, final long chatId) {
         User user = userService.findByChatId(chatId);
-        Coupon coupon = couponService.findCouponForUser(user, couponCommand);
+        Coupon coupon = couponService.findCouponForUserByCommand(user, couponCommand);
 
         SendMessage sm;
         if (couponService.couponCanBeUsedNow(coupon)) {
             boolean inAllPharmacies = pharmacyService.findAll().size() == coupon.getPharmacies().size();
             sm = botUtilityService.buildSendMessage(BotResponses.couponAcceptMessage(coupon, inAllPharmacies, couponDurationInMinutes), chatId);
-            botUtilityService.addAcceptCouponButton(sm, coupon, "Активировать купон ✅");
+            botUtilityService.addAcceptCouponButton(sm, coupon);
         } else {
             LOGGER.error("Coupon is not active for user: {}", chatId);
             sm = botUtilityService.buildSendMessage(BotResponses.couponIsNotActive(), chatId);
@@ -178,7 +185,7 @@ public class BotService {
 
     public void sendActivatedCouponIfCanBeUsed(final String couponCommand, final Long chatId) {
         User user = userService.findByChatId(chatId);
-        Coupon coupon = couponService.findCouponForUser(user, couponCommand);
+        Coupon coupon = couponService.findCouponForUserByCommand(user, couponCommand);
 
         byte[] barcodeImageByteArray = coupon.getBarcodeImageByteArray();
         InputFile barcodeInputFile = new InputFile(new ByteArrayInputStream(barcodeImageByteArray), "barcode.jpg");
@@ -186,8 +193,8 @@ public class BotService {
         String couponTextWithBarcodeAndTimeSign = "Действителен до: *" + couponService.getTimeSign() + "*" + "\n\n" + coupon.getBarcode() + "\n\n" + coupon.getText();
 
         MessageIdInChat messageIdInChat = sendMessageWithInputFileCallback.execute(barcodeInputFile, BotResponses.initialCouponText(couponTextWithBarcodeAndTimeSign, couponDurationInMinutes), chatId);
-        LOGGER.info("Adding coupon to map: {}, {}", messageIdInChat, coupon.getName());
-        couponService.addCouponToMap(messageIdInChat, couponTextWithBarcodeAndTimeSign);
+        LOGGER.info("Adding coupon to deletion map: {}, {}", messageIdInChat, coupon.getName());
+        couponService.addCouponToDeletionMap(messageIdInChat, couponTextWithBarcodeAndTimeSign);
         userService.markCouponAsUsedForUser(user, coupon);
 
         eventCollector.incrementCoupon();
@@ -197,11 +204,14 @@ public class BotService {
         if (coupon.getBarcode().equals(dateCouponBarcode)) {
             eventCollector.incrementDateCoupon();
         }
+        if (coupon.getBarcode().equalsIgnoreCase(refCouponBarcode)) {
+            eventCollector.incrementRefCoupon();
+        }
     }
 
     public void sendCityMenu(final long chatId) {
         User user = userService.findByChatId(chatId);
-        var sm = botUtilityService.buildSendMessage(BotResponses.yourCityCanUpdate(user.getCity()), chatId);
+        var sm = botUtilityService.buildSendMessage(BotResponses.yourCityAndCanUpdate(user.getCity()), chatId);
         pharmacyService.addCitiesButtons(sm);
         sendMessageCallback.execute(sm);
     }
@@ -228,10 +238,11 @@ public class BotService {
         sendMessageCallback.execute(botUtilityService.buildSendMessage(BotResponses.pharmaciesInfo(pharmacies), user.getChatId()));
     }
 
-    public void sendPharmaciesInfo(final String command, final long chatId) {
+    public void sendPharmaciesInfoOnUserCityIsNull(final String command, final long chatId) {
         List<Pharmacy> pharmacies = pharmacyService.findAll().stream().filter(pharmacy -> pharmacy.getCity() == City.valueOf(command.split("_")[1])).toList();
         var sm = botUtilityService.buildSendMessage(BotResponses.pharmaciesInfo(pharmacies), chatId);
         sendMessageCallback.execute(sm);
+        sendCityMenu(chatId);
     }
 
     public void sendBotDescription(final long chatId) {

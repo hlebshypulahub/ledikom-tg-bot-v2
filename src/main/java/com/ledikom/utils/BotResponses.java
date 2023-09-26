@@ -2,7 +2,6 @@ package com.ledikom.utils;
 
 import com.ledikom.model.*;
 
-import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.format.DateTimeFormatter;
 import java.util.List;
@@ -165,7 +164,7 @@ public final class BotResponses {
         return "Купон неактивен!";
     }
 
-    public static String yourCityCanUpdate(final City city) {
+    public static String yourCityAndCanUpdate(final City city) {
         return "Ваш город" + (city == null ?
                 " не указан.\n\nУкажите его, чтобы получать актуальные новости и акции только для вашего города!"
                 :

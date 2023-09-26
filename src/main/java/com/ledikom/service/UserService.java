@@ -211,7 +211,7 @@ public class UserService {
         });
     }
 
-    public void addNewRefUser(final long chatIdFromRefLink, final long chatId) {
+    public void incrementUserRefCounter(final long chatIdFromRefLink, final long chatId) {
         final boolean selfLinkOrUserExists = chatIdFromRefLink == chatId || userExistsByChatId(chatId);
         if (!selfLinkOrUserExists) {
             User user = findByChatId(chatIdFromRefLink);

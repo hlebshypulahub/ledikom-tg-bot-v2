@@ -77,7 +77,6 @@ public class BotUtilityService {
             InputStream imageStream = new URL(photoPath).openStream();
             return new InputFile(imageStream, "image.jpg");
         } catch (IOException e) {
-            LOGGER.error(e.getMessage());
             throw new RuntimeException("Something wrong with image processing", e);
         }
     }
@@ -173,20 +172,20 @@ public class BotUtilityService {
                 List.of(CouponService.COUPON_PREVIEW_BUTTON_CALLBACK_STRING + coupon.getId(), BotCommand.DATE.label));
     }
 
-    public void addAcceptCouponButton(final SendMessage sm, final Coupon coupon, final String buttonText) {
-        addButtonToMessage(sm, buttonText, CouponService.COUPON_ACCEPT_BUTTON_CALLBACK_STRING + coupon.getId());
+    public void addAcceptCouponButton(final SendMessage sm, final Coupon coupon) {
+        addButtonToMessage(sm, "Активировать купон ✅", CouponService.COUPON_ACCEPT_BUTTON_CALLBACK_STRING + coupon.getId());
     }
 
     public void addRepeatConsultationButton(final SendMessage sm) {
         addButtonToMessage(sm, "❓ Задать вопрос", BotCommand.CONSULTATION_ASK.label);
     }
 
-    public void addPreviewCouponButton(final SendMessage sm, final Coupon coupon, final String buttonText) {
-        addButtonToMessage(sm, buttonText, CouponService.COUPON_PREVIEW_BUTTON_CALLBACK_STRING + coupon.getId());
+    public void addPreviewCouponButton(final SendMessage sm, final Coupon coupon) {
+        addButtonToMessage(sm, "Активировать купон ✅", CouponService.COUPON_PREVIEW_BUTTON_CALLBACK_STRING + coupon.getId());
     }
 
     public void addPromotionAcceptButton(final SendMessage sm) {
-        addButtonToMessage(sm, "⭐⭐⭐ Участвовать ⭐⭐⭐", "promotionAccept");
+        addButtonToMessage(sm, "⭐⭐⭐ Участвовать ⭐⭐⭐", BotCommand.PROMOTION_ACCEPT.label);
     }
 
     public InlineKeyboardMarkup createListOfCoupons(final User user, final Set<Coupon> coupons) {
@@ -244,15 +243,6 @@ public class BotUtilityService {
     }
 
     private void addButtonToMessage(final SendMessage sm, final String buttonText, final String callbackData) {
-        var markup = new InlineKeyboardMarkup();
-        List<List<InlineKeyboardButton>> keyboard = new ArrayList<>();
-        var button = new InlineKeyboardButton();
-        button.setText(buttonText);
-        button.setCallbackData(callbackData);
-        List<InlineKeyboardButton> row = new ArrayList<>();
-        row.add(button);
-        keyboard.add(row);
-        markup.setKeyboard(keyboard);
-        sm.setReplyMarkup(markup);
+        addButtonsToMessage(sm, 1, List.of(buttonText), List.of(callbackData));
     }
 }

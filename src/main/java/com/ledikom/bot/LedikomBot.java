@@ -56,11 +56,11 @@ public class LedikomBot extends TelegramLongPollingBot {
 
     @PostConstruct
     public void fillActionsMap() {
-        commandWithChatIdActions.put(cmd -> cmd.startsWith(CouponService.COUPON_PREVIEW_BUTTON_CALLBACK_STRING), this.botService::sendCouponAcceptMessage);
+        commandWithChatIdActions.put(cmd -> cmd.startsWith(CouponService.COUPON_PREVIEW_BUTTON_CALLBACK_STRING), this.botService::sendCouponToAcceptMessage);
         commandWithChatIdActions.put(cmd -> cmd.startsWith(CouponService.COUPON_ACCEPT_BUTTON_CALLBACK_STRING), this.botService::sendActivatedCouponIfCanBeUsed);
         commandWithChatIdActions.put(cmd -> cmd.startsWith(BotCommand.START.label), this.botService::processStartOrRefLinkFollow);
         commandWithChatIdActions.put(cmd -> cmd.startsWith(MusicMenuItem.MUSIC_BUTTON_CALLBACK_STRING), this.botService::processMusicRequest);
-        commandWithChatIdActions.put(cmd -> cmd.startsWith(PharmacyService.PHARMACIES_BUTTON_CALLBACK_STRING), this.botService::sendPharmaciesInfo);
+        commandWithChatIdActions.put(cmd -> cmd.startsWith(PharmacyService.PHARMACIES_BUTTON_CALLBACK_STRING), this.botService::sendPharmaciesInfoOnUserCityIsNull);
         commandWithChatIdActions.put(cmd -> cmd.startsWith(WorkOutMenuItem.WORK_OUT_BUTTON_CALLBACK_STRING), this.botService::processWorkOutRequest);
         commandWithChatIdActions.put(cmd -> cmd.startsWith(GymnasticsMenuItem.GYMNASTICS_BUTTON_CALLBACK_STRING), this.botService::processGymnasticsRequest);
         commandWithChatIdActions.put(cmd -> Arrays.stream(City.values()).map(Enum::name).toList().contains(cmd), this.userService::setCityToUserAndAddCoupons);

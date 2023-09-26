@@ -14,11 +14,9 @@ import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.stereotype.Service;
 import org.springframework.web.client.RestTemplate;
-import org.telegram.telegrambots.meta.api.objects.InputFile;
 
 import java.io.IOException;
 import java.io.InputStream;
-import java.net.URL;
 import java.time.LocalDate;
 import java.time.LocalDateTime;
 import java.time.ZoneId;
@@ -73,7 +71,7 @@ public class CouponService {
         this.sendMessageWithPhotoCallback = ledikomBot.getSendMessageWithPhotoCallback();
     }
 
-    public Coupon findCouponForUser(final User user, final String couponCommand) {
+    public Coupon findCouponForUserByCommand(final User user, final String couponCommand) {
         int couponId = Integer.parseInt(couponCommand.split("_")[1]);
         LOGGER.info("Looking for a coupon: {}", couponId);
         return user.getCoupons().stream()
@@ -110,7 +108,7 @@ public class CouponService {
         addCouponToUser(getHelloCoupon(), user);
     }
 
-    public void addCouponToMap(final MessageIdInChat messageIdInChat, final String couponText) {
+    public void addCouponToDeletionMap(final MessageIdInChat messageIdInChat, final String couponText) {
         long expiryTimestamp = System.currentTimeMillis() + couponDurationInMinutes * 60 * 1000L;
         UserCouponRecord userCouponRecord = new UserCouponRecord(expiryTimestamp, couponText);
         userCoupons.put(messageIdInChat, userCouponRecord);
@@ -147,7 +145,7 @@ public class CouponService {
     private void sendCouponNewsToUsers(final Coupon coupon, final List<User> users) {
         users.forEach(user -> {
             var sm = botUtilityService.buildSendMessage(BotResponses.newCoupon(coupon), user.getChatId());
-            botUtilityService.addPreviewCouponButton(sm, coupon, "Активировать купон ✅");
+            botUtilityService.addPreviewCouponButton(sm, coupon);
             sendMessageCallback.execute(sm);
         });
         LOGGER.info("Coupon sent to users: {}", coupon.getId());
@@ -164,7 +162,7 @@ public class CouponService {
             LOGGER.info("Adding referral coupon {} for user: {}", coupon.getName(), user.getId());
             addCouponToUser(coupon, user);
             var sm = botUtilityService.buildSendMessage(BotResponses.refCoupon(user.getReferralCount()), user.getChatId());
-            botUtilityService.addPreviewCouponButton(sm, coupon, "Активировать купон ✅");
+            botUtilityService.addPreviewCouponButton(sm, coupon);
             sendMessageCallback.execute(sm);
         }
     }
@@ -187,7 +185,7 @@ public class CouponService {
         LOGGER.info("Adding date coupon for user: {}", user.getId());
         addCouponToUser(coupon, user);
         var sm = botUtilityService.buildSendMessage(BotResponses.specialDay(), user.getChatId());
-        botUtilityService.addPreviewCouponButton(sm, coupon, "Активировать купон ✅");
+        botUtilityService.addPreviewCouponButton(sm, coupon);
         sendMessageCallback.execute(sm);
     }
 
