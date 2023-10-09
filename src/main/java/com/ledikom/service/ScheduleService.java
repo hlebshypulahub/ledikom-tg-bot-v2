@@ -100,39 +100,47 @@ public class ScheduleService {
         couponService.addDateCouponToUsers();
     }
 
-    @Scheduled(fixedRate = 1000 * 60)
+    @Scheduled(fixedRate = 1000 * 10)
     public void processMessagesToDeleteInMap() {
-        LocalDateTime checkpointTimestamp = LocalDateTime.now().plusSeconds(DELETION_EPSILON_SECONDS);
-        BotService.messagesToDeleteMap.entrySet().removeIf(entry -> {
-            if (entry.getValue().isBefore(checkpointTimestamp)) {
-                DeleteMessage deleteMessage = DeleteMessage.builder()
-                        .chatId(entry.getKey().getChatId())
-                        .messageId(entry.getKey().getMessageId())
-                        .build();
-                deleteMessageCallback.execute(deleteMessage);
-                return true;
-            }
-            return false;
-        });
+        try {
+            LocalDateTime checkpointTimestamp = LocalDateTime.now().plusSeconds(DELETION_EPSILON_SECONDS);
+            BotService.messagesToDeleteMap.entrySet().removeIf(entry -> {
+                if (entry.getValue().isBefore(checkpointTimestamp)) {
+                    DeleteMessage deleteMessage = DeleteMessage.builder()
+                            .chatId(entry.getKey().getChatId())
+                            .messageId(entry.getKey().getMessageId())
+                            .build();
+                    deleteMessageCallback.execute(deleteMessage);
+                    return true;
+                }
+                return false;
+            });
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
-    @Scheduled(fixedRate = 1000 * 60)
+    @Scheduled(fixedRate = 1000 * 10)
     public void resetUserStateIfNoResponseAfterTime() {
-        LocalDateTime checkpointTimestamp = LocalDateTime.now();
+        try {
+            LocalDateTime checkpointTimestamp = LocalDateTime.now();
 
-        List<Long> keysToRemove = UserService.userStatesToReset.entrySet().stream()
-                .filter(entry -> entry.getValue().isBefore(checkpointTimestamp))
-                .map(Map.Entry::getKey)
-                .toList();
+            List<Long> keysToRemove = UserService.userStatesToReset.entrySet().stream()
+                    .filter(entry -> entry.getValue().isBefore(checkpointTimestamp))
+                    .map(Map.Entry::getKey)
+                    .toList();
 
-        keysToRemove.forEach(key -> {
-            var sm = botUtilityService.buildSendMessage(BotResponses.responseTimeExceeded(), key);
-            botUtilityService.addRepeatConsultationButton(sm);
-            sendMessageCallback.execute(sm);
-            userService.resetUserState(key);
-        });
+            keysToRemove.forEach(key -> {
+                var sm = botUtilityService.buildSendMessage(BotResponses.responseTimeExceeded(), key);
+                botUtilityService.addRepeatConsultationButton(sm);
+                sendMessageCallback.execute(sm);
+                userService.resetUserState(key);
+            });
 
-        keysToRemove.forEach(UserService.userStatesToReset::remove);
+            keysToRemove.forEach(UserService.userStatesToReset::remove);
+        } catch (Exception e) {
+            e.printStackTrace();
+        }
     }
 
     @Scheduled(cron = "0 0 8-19 * * *", zone = "GMT+3")
