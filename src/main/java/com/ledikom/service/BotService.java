@@ -156,6 +156,10 @@ public class BotService {
             pharmacyService.addCitiesButtons(sm);
             sendMessageCallback.execute(sm);
 
+            sm = botUtilityService.buildSendMessage(BotResponses.setSpecialDate(), chatId);
+            botUtilityService.addSetSpecialDateButton(sm);
+            sendMessageCallback.execute(sm);
+
             eventCollector.incrementNewUser();
         }
     }

@@ -125,10 +125,14 @@ public class BotUtilityService {
                 Arrays.stream(GymnasticsMenuItem.values()).map(value -> value.callbackDataString).collect(Collectors.toList()));
     }
 
+    public void addSetSpecialDateButton(final SendMessage sm) {
+        addButtonToMessage(sm, "Настроить особенную дату", BotCommand.DATE.label);
+    }
+
     public void addMusicDurationButtonsToSendMessage(final SendMessage sm, String musicString) {
         addButtonsToMessage(sm, 2,
                 List.of("5 мин \uD83D\uDD51", "10 мин \uD83D\uDD53", "15 мин \uD83D\uDD56", "20 мин \uD83D\uDD59"),
-                List.of(musicString + "_5", musicString + "_10", musicString + "+15", musicString + "_20"));
+                List.of(musicString + "_5", musicString + "_10", musicString + "_15", musicString + "_20"));
     }
 
     public void addCitiesButtons(final SendMessage sm, final Set<City> cities) {
@@ -169,8 +173,8 @@ public class BotUtilityService {
 
     public void addHelloMessageButtons(final SendMessage sm, final Coupon coupon) {
         addButtonsToMessage(sm, 1,
-                List.of("Активировать приветственный купон \uD83D\uDC4B", "Подарок в особенный день \uD83C\uDF81"),
-                List.of(CouponService.COUPON_PREVIEW_BUTTON_CALLBACK_STRING + coupon.getId(), BotCommand.DATE.label));
+                List.of("Активировать приветственный купон \uD83D\uDC4B"),
+                List.of(CouponService.COUPON_PREVIEW_BUTTON_CALLBACK_STRING + coupon.getId()));
     }
 
     public void addAcceptCouponButton(final SendMessage sm, final Coupon coupon, final String buttonText) {
@@ -178,7 +182,7 @@ public class BotUtilityService {
     }
 
     public void addRepeatConsultationButton(final SendMessage sm) {
-        addButtonToMessage(sm, "❓ Задать вопрос", BotCommand.CONSULTATION_ASK.label);
+        addButtonToMessage(sm, "❓ Задать вопрос по здоровью", BotCommand.CONSULTATION_ASK.label);
     }
 
     public void addPreviewCouponButton(final SendMessage sm, final Coupon coupon, final String buttonText) {
