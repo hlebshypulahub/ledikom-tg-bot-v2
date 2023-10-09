@@ -100,7 +100,7 @@ public class ScheduleService {
         couponService.addDateCouponToUsers();
     }
 
-    @Scheduled(fixedRate = 1000 * 10)
+    @Scheduled(fixedRate = 1000 * 60)
     public void processMessagesToDeleteInMap() {
         try {
             LocalDateTime checkpointTimestamp = LocalDateTime.now().plusSeconds(DELETION_EPSILON_SECONDS);
@@ -120,7 +120,7 @@ public class ScheduleService {
         }
     }
 
-    @Scheduled(fixedRate = 1000 * 10)
+    @Scheduled(fixedRate = 1000 * 60)
     public void resetUserStateIfNoResponseAfterTime() {
         try {
             LocalDateTime checkpointTimestamp = LocalDateTime.now();

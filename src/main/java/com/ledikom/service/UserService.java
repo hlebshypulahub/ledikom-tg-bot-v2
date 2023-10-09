@@ -29,7 +29,7 @@ public class UserService {
     private static final int INIT_REFERRAL_COUNT = 0;
     private static final boolean INIT_RECEIVE_NEWS = true;
     private static final UserResponseState INIT_RESPONSE_STATE = UserResponseState.NONE;
-    private static final int TO_RESET_AFTER_TIME_MIN = 1;
+    private static final int TO_RESET_AFTER_TIME_MIN = 10;
     public static final Map<Long, LocalDateTime> userStatesToReset = new HashMap<>();
 
     private static final Logger LOGGER = LoggerFactory.getLogger(UserService.class);
