@@ -73,12 +73,13 @@ public class BotService {
     }
 
     public void processStartOrRefLinkFollow(final String command, final Long chatId) {
+        Long refUserId = null;
         if (!command.endsWith("/start")) {
             LOGGER.info("Processing ref link following: {}", command);
             String refCode = command.substring(7);
-            userService.addNewRefUser(Long.parseLong(refCode), chatId);
+            refUserId = userService.addNewRefUser(Long.parseLong(refCode), chatId);
         }
-        addUserAndSendHelloMessage(chatId);
+        addUserAndSendHelloMessage(chatId, refUserId);
     }
 
     public void processMusicRequest(final String command, final Long chatId) {
@@ -145,15 +146,11 @@ public class BotService {
         sendMessageCallback.execute(sm);
     }
 
-    private void addUserAndSendHelloMessage(final long chatId) {
+    private void addUserAndSendHelloMessage(final long chatId, final Long refUserId) {
         if (!userService.userExistsByChatId(chatId)) {
-            userService.addNewUser(chatId);
+            userService.addNewUser(chatId, refUserId);
             var sm = botUtilityService.buildSendMessage(BotResponses.startMessage(), chatId);
             botUtilityService.addHelloMessageButtons(sm, couponService.getHelloCoupon());
-            sendMessageCallback.execute(sm);
-
-            sm = botUtilityService.buildSendMessage(BotResponses.chooseYourCity(), chatId);
-            pharmacyService.addCitiesButtons(sm);
             sendMessageCallback.execute(sm);
 
             sm = botUtilityService.buildSendMessage(BotResponses.setSpecialDate(), chatId);

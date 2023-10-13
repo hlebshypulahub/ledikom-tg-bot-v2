@@ -20,7 +20,8 @@ public enum BotCommand {
     TRIGGER_NEWS("/vkl_otkl_rassylku"),
     HEALTH_BEING("/zdorovye"),
     SETTINGS("/nastroyki"),
-    INFO("/informaciya");
+    INFO("/informaciya"),
+    ADMIN_EVENTS("events5463");
 
     public final String label;
 

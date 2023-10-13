@@ -219,17 +219,19 @@ public class CouponService {
     }
 
     private void addCouponToUser(final Coupon coupon, final User user) {
-        user.getCoupons().add(coupon);
+        if (!user.getCoupons().contains(coupon)) {
+            user.getCoupons().add(coupon);
 
-        if (coupon.getBarcode().equals(helloCouponBarcode)) {
-            user.setHelloCouponExpiryDate(LocalDate.now().plusDays(couponExpireInDays));
-        } else if (coupon.getBarcode().equals(dateCouponBarcode)) {
-            user.setDateCouponExpiryDate(LocalDate.now().plusDays(couponExpireInDays));
-        } else if (coupon.getBarcode().equals(refCouponBarcode)) {
-            user.setRefCouponExpiryDate(LocalDate.now().plusDays(couponExpireInDays));
+            if (coupon.getBarcode().equals(helloCouponBarcode)) {
+                user.setHelloCouponExpiryDate(LocalDate.now().plusDays(couponExpireInDays));
+            } else if (coupon.getBarcode().equals(dateCouponBarcode)) {
+                user.setDateCouponExpiryDate(LocalDate.now().plusDays(couponExpireInDays));
+            } else if (coupon.getBarcode().equals(refCouponBarcode)) {
+                user.setRefCouponExpiryDate(LocalDate.now().plusDays(couponExpireInDays));
+            }
+
+            userService.saveUser(user);
         }
-
-        userService.saveUser(user);
     }
 
     // TODO: add regex checks and split on methods
