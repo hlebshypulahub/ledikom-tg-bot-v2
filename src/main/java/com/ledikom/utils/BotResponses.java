@@ -307,7 +307,7 @@ public final class BotResponses {
     }
 
     public static String pharmaciesInfo(final List<Pharmacy> pharmacies) {
-        StringBuilder sb = new StringBuilder("Список аптек 🏥");
+        StringBuilder sb = new StringBuilder("Список аптек, участвующих в программе в вашем городе 🏥");
         sb.append("\n\n");
 
         pharmacies.forEach(pharmacy -> sb.append(pharmacy.getName()).append("\n")

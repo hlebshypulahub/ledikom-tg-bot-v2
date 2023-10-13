@@ -41,6 +41,10 @@ public class PharmacyService {
         return pharmacyRepository.findAll();
     }
 
+    public List<Pharmacy> findAllByCity(final City city) {
+        return new ArrayList<>(pharmacyRepository.findAllByCity(city));
+    }
+
     // TODO: validation
     public List<Pharmacy> getPharmaciesFromIdsString(final String ids) {
         LOGGER.info("Getting pharmacies for ids string: {}", ids);

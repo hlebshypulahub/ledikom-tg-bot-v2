@@ -143,7 +143,7 @@ public class UserService {
                 setUserState(user, UserResponseState.NONE);
                 sendMessageCallback.execute(botUtilityService.buildSendMessage(BotResponses.waitForGptResponse(), chatId));
                 CompletableFuture.supplyAsync(() -> {
-                    LOGGER.info("Calling GPT API...");
+                    LOGGER.info("User " + chatId + ", Calling GPT API...");
                     String gptResponse;
                     try {
                         gptResponse = gptService.getResponse(text);
@@ -276,11 +276,13 @@ public class UserService {
             user.getCoupons().addAll(activeCouponsForUser);
             userRepository.save(user);
 
-            sendMessageCallback.execute(botUtilityService.buildSendMessage(BotResponses.cityAddedAndNewCouponsGot(cityName), chatId));
+            sendMessageCallback.execute(botUtilityService.buildSendMessage(BotResponses.cityAddedAndNewCouponsGot(cityName) + "\n\n\n" + BotResponses.pharmaciesInfo(pharmacyService.findAllByCity(user.getCity())), chatId));
             sendAllCouponsList(user.getChatId());
         } else {
-            sendMessageCallback.execute(botUtilityService.buildSendMessage(BotResponses.cityAdded(cityName), chatId));
+            sendMessageCallback.execute(botUtilityService.buildSendMessage(BotResponses.cityAdded(cityName) + "\n\n\n" + BotResponses.pharmaciesInfo(pharmacyService.findAllByCity(user.getCity())), chatId));
         }
+
+
 
         BotService.eventCollector.incrementCity();
     }
