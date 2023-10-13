@@ -59,11 +59,11 @@ public class ScheduleService {
         this.deleteMessageCallback = ledikomBot.getDeleteMessageCallback();
     }
 
-    @Scheduled(cron = "0 0 8-20 * * *", zone = "GMT+3")
+    @Scheduled(cron = "0 0 8-23 * * *", zone = "GMT+3")
     public void sendEventsToAdmin() {
         BotService.eventCollector.setTimestamp(LocalDateTime.now());
         eventCollectorRepository.save(BotService.eventCollector);
-        sendMessageCallback.execute(botUtilityService.buildSendMessage(BotService.eventCollector.messageToAdmin(), adminId));
+        sendMessageCallback.execute(botUtilityService.buildSendMessage(BotService.eventCollector.messageToAdmin() + "\n\n\n\n" + pollService.getPollsInfoForAdmin(), adminId));
         BotService.eventCollector.reset();
     }
 
@@ -141,12 +141,6 @@ public class ScheduleService {
         } catch (Exception e) {
             e.printStackTrace();
         }
-    }
-
-    @Scheduled(cron = "0 0 8-19 * * *", zone = "GMT+3")
-    public void sendPollInfoToAdmin() {
-        SendMessage sm = botUtilityService.buildSendMessage(pollService.getPollsInfoForAdmin(), adminId);
-        sendMessageCallback.execute(sm);
     }
 
     private void updateCouponTimerAndMessage(final MessageIdInChat messageIdInChat, final UserCouponRecord userCouponRecord, final long timeLeftInSeconds) {
