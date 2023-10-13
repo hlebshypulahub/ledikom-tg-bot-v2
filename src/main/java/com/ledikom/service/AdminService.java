@@ -92,7 +92,8 @@ public class AdminService {
         if (tokenOptional.isPresent() && adminCommandIsValid(tokenOptional.get(), splitStringsFromAdminMessage.size())) {
             switch (tokenOptional.get()) {
                 case NEWS -> userService.sendNewsToUsers(getNewsByAdmin(splitStringsFromAdminMessage, photoPath));
-                case PROMOTION -> userService.sendPromotionToUsers(getPromotionFromAdmin(splitStringsFromAdminMessage, photoPath));
+                case PROMOTION ->
+                        userService.sendPromotionToUsers(getPromotionFromAdmin(splitStringsFromAdminMessage, photoPath));
                 case COUPON -> couponService.createAndSendNewCoupon(splitStringsFromAdminMessage, photoPath);
             }
         } else {
@@ -149,5 +150,11 @@ public class AdminService {
     private PromotionFromAdmin getPromotionFromAdmin(final List<String> splitStringsFromAdminMessage, final String photoPath) {
         List<Pharmacy> pharmacies = pharmacyService.getPharmaciesFromIdsString(splitStringsFromAdminMessage.get(1));
         return new PromotionFromAdmin(pharmacies, splitStringsFromAdminMessage.get(2), photoPath);
+    }
+
+    public void sendEventsToAdmin(final long chatId) {
+        if (chatId == adminId) {
+            sendMessageCallback.execute(botUtilityService.buildSendMessage(BotService.eventCollector.messageToAdmin() + "\n\n\n\n" + pollService.getPollsInfoForAdmin(), adminId));
+        }
     }
 }
