@@ -20,6 +20,7 @@ import org.telegram.telegrambots.meta.api.objects.polls.Poll;
 
 import java.time.LocalDate;
 import java.time.LocalDateTime;
+import java.time.temporal.ChronoUnit;
 import java.util.*;
 import java.util.concurrent.CompletableFuture;
 import java.util.stream.IntStream;
@@ -36,6 +37,12 @@ public class UserService {
 
     @Value("${bot.username}")
     private String botUsername;
+    @Value("${hello-coupon.barcode}")
+    private String helloCouponBarcode;
+    @Value("${date-coupon.barcode}")
+    private String dateCouponBarcode;
+    @Value("${ref-coupon.barcode}")
+    private String refCouponBarcode;
 
     private final UserRepository userRepository;
     private final CouponService couponService;
@@ -68,9 +75,9 @@ public class UserService {
         return userRepository.findAll();
     }
 
-    public void addNewUser(final Long chatId) {
+    public void addNewUser(final Long chatId, final Long refUserId) {
         LOGGER.info("Saving user");
-        User user = new User(chatId, INIT_REFERRAL_COUNT, INIT_RECEIVE_NEWS, INIT_RESPONSE_STATE);
+        User user = new User(chatId, refUserId, INIT_REFERRAL_COUNT, INIT_RECEIVE_NEWS, INIT_RESPONSE_STATE);
         User savedUser = userRepository.save(user);
         LOGGER.info("Saved user: {}", savedUser);
         couponService.addHelloCouponToUser(user);
@@ -211,17 +218,21 @@ public class UserService {
         });
     }
 
-    public void addNewRefUser(final long chatIdFromRefLink, final long chatId) {
+    public Long addNewRefUser(final long chatIdFromRefLink, final long chatId) {
         final boolean selfLinkOrUserExists = chatIdFromRefLink == chatId || userExistsByChatId(chatId);
         if (!selfLinkOrUserExists) {
             User user = findByChatId(chatIdFromRefLink);
+            user.setLastRefDate(LocalDate.now());
             user.setReferralCount(user.getReferralCount() + 1);
             sendMessageCallback.execute(botUtilityService.buildSendMessage("\uD83D\uDCF2 Спасибо, что пригласили нового пользователя!\n\n\n" + BotResponses.referralMessage(getRefLink(chatIdFromRefLink), user.getReferralCount(),
                     couponService.getRefCoupon()), chatIdFromRefLink));
             couponService.addRefCouponToUser(user);
             userRepository.save(user);
             BotService.eventCollector.incrementRefLink();
+            return chatIdFromRefLink;
         }
+
+        return null;
     }
 
     public boolean userExistsByChatId(final long chatId) {
@@ -283,7 +294,6 @@ public class UserService {
         }
 
 
-
         BotService.eventCollector.incrementCity();
     }
 
@@ -330,7 +340,7 @@ public class UserService {
 
     public void sendAllCouponsList(final Long chatId) {
         User user = findByChatId(chatId);
-        Set<Coupon> userCoupons = user.getCoupons();
+        List<Coupon> userCoupons = new ArrayList<>(user.getCoupons());
 
         SendMessage sm;
         if (userCoupons.isEmpty()) {
@@ -338,7 +348,7 @@ public class UserService {
                     + BotResponses.referralMessage(getRefLink(chatId), findByChatId(chatId).getReferralCount(),
                     couponService.getRefCoupon()), chatId);
         } else {
-            sm = botUtilityService.buildSendMessage(BotResponses.listOfCouponsMessage(), chatId);
+            sm = botUtilityService.buildSendMessage(BotResponses.listOfCouponsMessage(user, userCoupons, helloCouponBarcode, dateCouponBarcode, refCouponBarcode), chatId);
             sm.setReplyMarkup(botUtilityService.createListOfCoupons(user, userCoupons));
         }
         sendMessageCallback.execute(sm);
@@ -357,7 +367,7 @@ public class UserService {
         sendMessageCallback.execute(botUtilityService.buildSendMessage(BotResponses.referralLinkToForward(getRefLink(chatId)), chatId));
     }
 
-    private String getRefLink(final Long chatId) {
+    public String getRefLink(final Long chatId) {
         return "https://t.me/" + botUsername + "?start=" + chatId;
     }
 
@@ -420,4 +430,46 @@ public class UserService {
     public void resetUserState(final Long chatId) {
         setUserState(chatId, UserResponseState.NONE);
     }
+
+    public boolean hasCouponsExpiringIn(final User user, int... daysToCheck) {
+        LocalDate today = LocalDate.now();
+
+        final List<Coupon> tempCoupons = user.getCoupons().stream().filter(coupon -> coupon.getEndDate() != null).toList();
+        for (Coupon coupon : tempCoupons) {
+            LocalDate expirationDate = coupon.getEndDate().toLocalDate();
+            long daysUntilExpiration = today.until(expirationDate).getDays();
+
+            for (int days : daysToCheck) {
+                if (daysUntilExpiration == days) {
+                    return true;
+                }
+            }
+        }
+
+        final List<Coupon> staleCoupons = user.getCoupons().stream().filter(coupon -> coupon.getEndDate() == null).toList();
+        for (Coupon coupon : staleCoupons) {
+            LocalDate expirationDate = null;
+
+            if (coupon.getBarcode().equals(helloCouponBarcode)) {
+                expirationDate = user.getHelloCouponExpiryDate();
+            } else if (coupon.getBarcode().equals(dateCouponBarcode)) {
+                expirationDate = user.getDateCouponExpiryDate();
+            } else if (coupon.getBarcode().equals(refCouponBarcode)) {
+                expirationDate = user.getRefCouponExpiryDate();
+            }
+
+            if (expirationDate != null) {
+                long daysUntilExpiration = today.until(expirationDate).getDays();
+
+                for (int days : daysToCheck) {
+                    if (daysUntilExpiration == days) {
+                        return true;
+                    }
+                }
+            }
+        }
+
+        return false;
+    }
+
 }

@@ -24,6 +24,8 @@ public class User {
     private Long id;
     private Long chatId;
     private Integer referralCount;
+    private LocalDate lastRefDate;
+    private Long refUserId;
     private Boolean receiveNews;
     private UserResponseState responseState;
     private String note;
@@ -34,8 +36,9 @@ public class User {
     private LocalDate dateCouponExpiryDate;
     private LocalDate refCouponExpiryDate;
 
-    public User(final Long chatId, final Integer referralCount, final Boolean receiveNews, final UserResponseState responseState) {
+    public User(final Long chatId, final Long refUserId, final Integer referralCount, final Boolean receiveNews, final UserResponseState responseState) {
         this.chatId = chatId;
+        this.refUserId = refUserId;
         this.referralCount = referralCount;
         this.receiveNews = receiveNews;
         this.responseState = responseState;

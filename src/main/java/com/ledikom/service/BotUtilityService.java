@@ -193,25 +193,13 @@ public class BotUtilityService {
         addButtonToMessage(sm, "⭐⭐⭐ Участвовать ⭐⭐⭐", "promotionAccept");
     }
 
-    public InlineKeyboardMarkup createListOfCoupons(final User user, final Set<Coupon> coupons) {
+    public InlineKeyboardMarkup createListOfCoupons(final User user, final List<Coupon> coupons) {
         var markup = new InlineKeyboardMarkup();
         List<List<InlineKeyboardButton>> keyboard = new ArrayList<>();
 
         for (Coupon coupon : coupons) {
             var button = new InlineKeyboardButton();
-
-            String prefix = "";
-            if (coupon.getBarcode().equals(helloCouponBarcode)) {
-                prefix = "(" + ChronoUnit.DAYS.between(LocalDate.now(), user.getHelloCouponExpiryDate()) + " д.) ";
-            } else if (coupon.getBarcode().equals(dateCouponBarcode)) {
-                prefix = "(" + ChronoUnit.DAYS.between(LocalDate.now(), user.getDateCouponExpiryDate()) + " д.) ";
-            } else if (coupon.getBarcode().equals(refCouponBarcode)) {
-                prefix = "(" + ChronoUnit.DAYS.between(LocalDate.now(), user.getRefCouponExpiryDate()) + " д.) ";
-            } else {
-                prefix = "(" + ChronoUnit.DAYS.between(LocalDate.now(), coupon.getEndDate()) + " д.)";
-            }
-
-            button.setText(prefix + coupon.getName());
+            button.setText(coupon.getName());
             button.setCallbackData(CouponService.COUPON_PREVIEW_BUTTON_CALLBACK_STRING + coupon.getId());
             List<InlineKeyboardButton> row = new ArrayList<>();
             row.add(button);
