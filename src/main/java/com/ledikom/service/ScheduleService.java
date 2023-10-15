@@ -148,7 +148,6 @@ public class ScheduleService {
                         + BotResponses.listOfCouponsMessage(user, new ArrayList<>(user.getCoupons()), helloCouponBarcode, dateCouponBarcode, refCouponBarcode), user.getChatId());
                 sm.setReplyMarkup(botUtilityService.createListOfCoupons(user, new ArrayList<>(user.getCoupons())));
                 sendMessageCallback.execute(sm);
-                System.out.println(sm.getText());
             }
         });
     }
