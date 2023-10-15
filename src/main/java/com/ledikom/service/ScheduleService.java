@@ -150,6 +150,8 @@ public class ScheduleService {
                 sendMessageCallback.execute(sm);
             }
         });
+
+        LOGGER.info("sendCitySetReminder to users count: " + users.size());
     }
 
     @Scheduled(cron = "0 15 8 * * *", zone = "GMT+3")
