@@ -3,6 +3,7 @@ package com.ledikom.service;
 import com.ledikom.bot.LedikomBot;
 import com.ledikom.callback.GetFileFromBotCallback;
 import com.ledikom.callback.SendMessageCallback;
+import com.ledikom.model.EventCollector;
 import com.ledikom.model.NewsFromAdmin;
 import com.ledikom.model.Pharmacy;
 import com.ledikom.model.PromotionFromAdmin;
@@ -154,7 +155,7 @@ public class AdminService {
 
     public void sendEventsToAdmin(final long chatId) {
         if (chatId == adminId) {
-            sendMessageCallback.execute(botUtilityService.buildSendMessage(BotService.eventCollector.messageToAdmin() + "\n\n\n\n" + pollService.getPollsInfoForAdmin(), adminId));
+            sendMessageCallback.execute(botUtilityService.buildSendMessage(BotService.eventCollector.messageToAdmin(EventCollector.MessageFrequency.HOURLY) + "\n\n\n\n" + pollService.getPollsInfoForAdmin(), adminId));
         }
     }
 }

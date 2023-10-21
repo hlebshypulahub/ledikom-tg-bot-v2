@@ -14,6 +14,7 @@ bot:
 admin:
   id: {ADMIN_ID}
   tech-id: ${ADMIN_TECH_ID}
+  office-id: ${ADMIN_OFFICE_ID}
 
 gpt:
   token: ${GPT_TOKEN}
