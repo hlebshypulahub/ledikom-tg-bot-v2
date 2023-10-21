@@ -2,14 +2,18 @@ package com.ledikom.model;
 
 import jakarta.persistence.Entity;
 import jakarta.persistence.Id;
-import lombok.Getter;
-import lombok.Setter;
+import lombok.*;
 
 import java.time.LocalDateTime;
+import java.util.function.BinaryOperator;
+import java.util.function.Function;
 
 @Entity
 @Getter
 @Setter
+@Builder
+@NoArgsConstructor
+@AllArgsConstructor
 public class EventCollector {
 
     @Id
@@ -113,8 +117,8 @@ public class EventCollector {
         newsDisabled = newsDisabled - 1;
     }
 
-    public String messageToAdmin() {
-        return "Счетчик новых событий:\n\n" +
+    public String messageToAdmin(MessageFrequency messageFrequency) {
+        return "Счетчик новых событий (" + messageFrequency.label + "):\n\n" +
                 newUser + " - Новые пользователи\n" +
                 refLink + " - Переход по реф. ссылке\n" +
                 city + " - Настройка города\n" +
@@ -130,5 +134,36 @@ public class EventCollector {
                 poll + " - Участие в опросах\n" +
                 note + " - Настройка заметок\n" +
                 newsDisabled + " - Отключение рассылки\n";
+    }
+
+    public static EventCollector add(final EventCollector collector1, final EventCollector collector2) {
+        return EventCollector.builder()
+                .newUser(collector1.getNewUser() + collector2.getNewUser())
+                .refLink(collector1.getRefLink() + collector2.getRefLink())
+                .city(collector1.getCity() + collector2.getCity())
+                .date(collector1.getDate() + collector2.getDate())
+                .coupon(collector1.getCoupon() + collector2.getCoupon())
+                .helloCoupon(collector1.getHelloCoupon() + collector2.getHelloCoupon())
+                .dateCoupon(collector1.getDateCoupon() + collector2.getDateCoupon())
+                .consultation(collector1.getConsultation() + collector2.getConsultation())
+                .music(collector1.getMusic() + collector2.getMusic())
+                .gymnastics(collector1.getGymnastics() + collector2.getGymnastics())
+                .workout(collector1.getWorkout() + collector2.getWorkout())
+                .promotion(collector1.getPromotion() + collector2.getPromotion())
+                .poll(collector1.getPoll() + collector2.getPoll())
+                .note(collector1.getNote() + collector2.getNote())
+                .newsDisabled(collector1.getNewsDisabled() + collector2.getNewsDisabled())
+                .build();
+    }
+
+    public enum MessageFrequency {
+        DAILY("за последние сутки"),
+        HOURLY("за последний час");
+
+        public final String label;
+
+        MessageFrequency(final String label) {
+            this.label = label;
+        }
     }
 }

@@ -83,7 +83,7 @@ public class BotService {
     }
 
     public void processMusicRequest(final String command, final Long chatId) {
-        LOGGER.info("Processing music request: {}", command);
+        LOGGER.info("Processing music request: {}, id: {}", command, chatId);
 
         MusicCallbackRequest musicCallbackRequest = UtilityHelper.getMusicCallbackRequest(command);
 
@@ -94,7 +94,7 @@ public class BotService {
             SendAudio sendAudio = new SendAudio(String.valueOf(chatId), audioInputFile);
             LocalDateTime toDeleteTimestamp = LocalDateTime.now().plusMinutes(musicCallbackRequest.getDuration());
             MessageIdInChat messageIdInChatMusic = sendMusicFileCallback.execute(sendAudio);
-            LOGGER.info("Message to delete put to map: {}, {}", messageIdInChatMusic, toDeleteTimestamp);
+            LOGGER.info("Message to delete put to map: {}, {}, id: {}", messageIdInChatMusic, toDeleteTimestamp, chatId);
             messagesToDeleteMap.put(messageIdInChatMusic, toDeleteTimestamp);
             eventCollector.incrementMusic();
         } else {
@@ -109,7 +109,7 @@ public class BotService {
     }
 
     public void processWorkOutRequest(final String command, final Long chatId) {
-        LOGGER.info("Processing work out request: {}", command);
+        LOGGER.info("Processing work out request: {}, id: {}", command, chatId);
 
         WorkOutMenuItem workOutMenuItem = Arrays.stream(WorkOutMenuItem.values()).filter(e -> e.callbackDataString.equals(command)).findFirst().orElseThrow(() -> new RuntimeException("No work out menu found: " + command));
 
@@ -119,7 +119,7 @@ public class BotService {
     }
 
     public void processGymnasticsRequest(final String command, final Long chatId) {
-        LOGGER.info("Processing gymnastics request: {}", command);
+        LOGGER.info("Processing gymnastics request: {}, id: {}", command, chatId);
 
         GymnasticsMenuItem gymnasticsMenuItem = Arrays.stream(GymnasticsMenuItem.values()).filter(e -> e.callbackDataString.equals(command)).findFirst().orElseThrow(() -> new RuntimeException("No gymnastics menu found: " + command));
 
@@ -187,7 +187,7 @@ public class BotService {
         String couponTextWithBarcodeAndTimeSign = "Действителен до: *" + couponService.getTimeSign() + "*" + "\n\n" + coupon.getBarcode() + "\n\n" + coupon.getText();
 
         MessageIdInChat messageIdInChat = sendMessageWithInputFileCallback.execute(barcodeInputFile, BotResponses.initialCouponText(couponTextWithBarcodeAndTimeSign, couponDurationInMinutes), chatId);
-        LOGGER.info("Adding coupon to map: {}, {}", messageIdInChat, coupon.getName());
+        LOGGER.info("Adding coupon to map: {}, {}, id: {}", messageIdInChat, coupon.getName(), chatId);
         couponService.addCouponToMap(messageIdInChat, couponTextWithBarcodeAndTimeSign);
         userService.markCouponAsUsedForUser(user, coupon);
 

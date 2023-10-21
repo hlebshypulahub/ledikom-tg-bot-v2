@@ -4,6 +4,7 @@ import com.ledikom.bot.LedikomBot;
 import com.ledikom.callback.DeleteMessageCallback;
 import com.ledikom.callback.EditMessageCallback;
 import com.ledikom.callback.SendMessageCallback;
+import com.ledikom.model.EventCollector;
 import com.ledikom.model.MessageIdInChat;
 import com.ledikom.model.User;
 import com.ledikom.model.UserCouponRecord;
@@ -13,6 +14,7 @@ import jakarta.annotation.PostConstruct;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
+import org.springframework.cglib.core.Local;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.telegram.telegrambots.meta.api.methods.updatingmessages.DeleteMessage;
@@ -23,6 +25,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.stream.Collectors;
 
 @Service
 public class ScheduleService {
@@ -33,6 +36,8 @@ public class ScheduleService {
 
     @Value("${admin.id}")
     private Long adminId;
+    @Value("${admin.office-id}")
+    private Long officeId;
     @Value("${hello-coupon.barcode}")
     private String helloCouponBarcode;
     @Value("${date-coupon.barcode}")
@@ -70,11 +75,26 @@ public class ScheduleService {
     }
 
     @Scheduled(cron = "0 0 8-23 * * *", zone = "GMT+3")
-    public void sendEventsToAdmin() {
+    public void sendEventsToAdminHourly() {
         BotService.eventCollector.setTimestamp(LocalDateTime.now());
         eventCollectorRepository.save(BotService.eventCollector);
-        sendMessageCallback.execute(botUtilityService.buildSendMessage(BotService.eventCollector.messageToAdmin() + "\n\n\n\n" + pollService.getPollsInfoForAdmin(), adminId));
+        sendMessageCallback.execute(botUtilityService.buildSendMessage(BotService.eventCollector.messageToAdmin(EventCollector.MessageFrequency.HOURLY) + "\n\n\n\n" + pollService.getPollsInfoForAdmin(), adminId));
         BotService.eventCollector.reset();
+    }
+
+    @Scheduled(cron = "0 0 22 * * *", zone = "GMT+3")
+    public void sendEventsToAdminDaily() {
+
+        var eventCollectorList = eventCollectorRepository.findByTimestampBetween(LocalDate.now().atStartOfDay(),
+                LocalDate.now().atTime(23, 59, 59, 999999999));
+
+        System.out.println(eventCollectorList.size());
+
+        EventCollector aggregatedCollector = eventCollectorList.stream().reduce(new EventCollector(), EventCollector::add);
+
+        String message = aggregatedCollector.messageToAdmin(EventCollector.MessageFrequency.DAILY);
+        sendMessageCallback.execute(botUtilityService.buildSendMessage(message, officeId));
+        sendMessageCallback.execute(botUtilityService.buildSendMessage(message, adminId));
     }
 
     @Scheduled(cron = "0 0 12 * * 6", zone = "GMT+3")

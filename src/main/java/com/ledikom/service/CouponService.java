@@ -75,7 +75,7 @@ public class CouponService {
 
     public Coupon findCouponForUser(final User user, final String couponCommand) {
         int couponId = Integer.parseInt(couponCommand.split("_")[1]);
-        LOGGER.info("Looking for a coupon: {}", couponId);
+        LOGGER.info("Looking for a coupon: {}, id: {}", couponId, user.getChatId());
         return user.getCoupons().stream()
                 .filter(coupon -> coupon.getId() == couponId)
                 .filter(this::couponCanBeUsedNow)
@@ -341,7 +341,7 @@ public class CouponService {
 
     @Transactional
     public void clearUserCityCoupons(final User user) {
-        LOGGER.info("Clearing user city coupons");
+        LOGGER.info("Clearing user city coupons, id: {}", user.getChatId());
 
         List<Coupon> couponsToDelete = user.getCoupons().stream().filter(coupon -> !couponIsStale(coupon)).toList();
         couponsToDelete.forEach(coupon -> {
