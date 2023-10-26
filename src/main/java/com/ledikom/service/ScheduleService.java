@@ -109,7 +109,18 @@ public class ScheduleService {
     }
 
     @Scheduled(cron = "0 0 12 * * 2", zone = "GMT+3")
-    public void sendSendRefLinkReminder() {
+    public void sendSendRefLinkReminderTuesday() {
+        List<User> users = userService.findAllUsers().stream().filter(user -> user.getLastRefDate() == null || ChronoUnit.DAYS.between(user.getLastRefDate(), LocalDate.now()) > 7).toList();
+        users.forEach(user -> {
+            var sm = botUtilityService.buildSendMessage(BotResponses.sendRefLinkReminder(userService.getRefLink(user.getChatId()), user.getReferralCount(), couponService.getRefCoupon()), user.getChatId());
+            sendMessageCallback.execute(sm);
+            sendMessageCallback.execute(botUtilityService.buildSendMessage(BotResponses.referralLinkToForward(userService.getRefLink(user.getChatId())), user.getChatId()));
+        });
+        LOGGER.info("sendSendRefLinkReminder to users count: " + users.size());
+    }
+
+    @Scheduled(cron = "0 0 12 * * 5", zone = "GMT+3")
+    public void sendSendRefLinkReminderFriday() {
         List<User> users = userService.findAllUsers().stream().filter(user -> user.getLastRefDate() == null || ChronoUnit.DAYS.between(user.getLastRefDate(), LocalDate.now()) > 7).toList();
         users.forEach(user -> {
             var sm = botUtilityService.buildSendMessage(BotResponses.sendRefLinkReminder(userService.getRefLink(user.getChatId()), user.getReferralCount(), couponService.getRefCoupon()), user.getChatId());
