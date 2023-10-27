@@ -119,7 +119,7 @@ public class ScheduleService {
         LOGGER.info("sendSendRefLinkReminder to users count: " + users.size());
     }
 
-    @Scheduled(cron = "0 0 12 * * 5", zone = "GMT+3")
+    @Scheduled(cron = "0 0 18 * * 5", zone = "GMT+3")
     public void sendSendRefLinkReminderFriday() {
         List<User> users = userService.findAllUsers().stream().filter(user -> user.getLastRefDate() == null || ChronoUnit.DAYS.between(user.getLastRefDate(), LocalDate.now()) > 7).toList();
         users.forEach(user -> {
