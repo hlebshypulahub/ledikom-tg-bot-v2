@@ -75,7 +75,7 @@ public class BotService {
     public void processStartOrRefLinkFollow(final String command, final Long chatId) {
         Long refUserId = null;
         if (!command.endsWith("/start")) {
-            LOGGER.info("Processing ref link following: {}", command);
+            LOGGER.info("Processing ref link following: {}, executed by user: {}", command, chatId);
             String refCode = command.substring(7);
             refUserId = userService.addNewRefUser(Long.parseLong(refCode), chatId);
         }
