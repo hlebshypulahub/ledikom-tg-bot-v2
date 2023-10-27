@@ -364,6 +364,7 @@ public class UserService {
     public void sendReferralLinkForUser(final Long chatId) {
         sendMessageCallback.execute(botUtilityService.buildSendMessage(BotResponses.referralMessage(getRefLink(chatId), findByChatId(chatId).getReferralCount(),
                 couponService.getRefCoupon()), chatId));
+        sendMessageCallback.execute(botUtilityService.buildSendMessage("_*Перешлите сообщение ниже вашим контактам_", chatId));
         sendMessageCallback.execute(botUtilityService.buildSendMessage(BotResponses.referralLinkToForward(getRefLink(chatId)), chatId));
     }
 

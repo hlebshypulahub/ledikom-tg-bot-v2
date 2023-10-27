@@ -91,8 +91,8 @@ public final class BotResponses {
 
         return "Ваша ссылка:\n\n\n" + "[" + refLink + "](" + refLink + ")\n\n\n*Количество приглашенных вами пользователей:   "
                 + referralCount
-                + "*\n\n\nПоделитесь ссылкой еще с ❗*" + toInviteLeft + "*❗ друзьями (скопируйте и отправьте вашим контактам) и получайте бонусы!\n\n"
-                + "\uD83E\uDD47 за каждые 10 приглашенных: \n*" + coupon.getName() + "\n" + coupon.getText() + "*";
+                + "*\n\n\nПоделитесь ссылкой еще с ❗*" + toInviteLeft + "*❗ друзьями (скопируйте и отправьте вашим контактам или перешлите сообщение ниже) и получайте бонусы!\n\n"
+                + "\uD83E\uDD47 за каждые *10* приглашенных: \n*" + coupon.getName() + "\n" + coupon.getText() + "*";
     }
 
     public static String sendRefLinkReminder(final String refLink, final int referralCount, final Coupon coupon) {
@@ -363,7 +363,17 @@ public final class BotResponses {
     }
 
     public static String referralLinkToForward(final String refLink) {
-        return "[" + refLink + "](" + refLink + ")";
+        return """
+                Привет! Приглашаю тебя присоединиться к *чат-ассистенту* сети аптек "Ледиком", он предоставляет множество удобных функций *для заботы о здоровье и экономии на покупках*.
+                                
+                *Чтобы попробовать его и получить скидку 5%, перейди по этой ссылке:*
+                """
+                +
+                "[" + refLink + "](" + refLink + ")\n\n"
+                +
+                """      
+                _Уверен, что и тебе пригодится! Пользуйся и экономь!_
+                """;
     }
 
     public static String consultationMenu() {

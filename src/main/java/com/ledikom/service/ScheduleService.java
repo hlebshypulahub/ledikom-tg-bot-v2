@@ -125,6 +125,7 @@ public class ScheduleService {
         users.forEach(user -> {
             var sm = botUtilityService.buildSendMessage(BotResponses.sendRefLinkReminder(userService.getRefLink(user.getChatId()), user.getReferralCount(), couponService.getRefCoupon()), user.getChatId());
             sendMessageCallback.execute(sm);
+            sendMessageCallback.execute(botUtilityService.buildSendMessage("_*Перешлите сообщение ниже вашим контактам_", user.getChatId()));
             sendMessageCallback.execute(botUtilityService.buildSendMessage(BotResponses.referralLinkToForward(userService.getRefLink(user.getChatId())), user.getChatId()));
         });
         LOGGER.info("sendSendRefLinkReminder to users count: " + users.size());
