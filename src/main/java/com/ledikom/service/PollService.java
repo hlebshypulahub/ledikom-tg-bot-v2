@@ -55,8 +55,8 @@ public class PollService {
                 .forEach(index -> {
                     Poll poll = polls.get(index);
                     sb.append(index + 1).append(". ").append(poll.getQuestion()).append("\n");
-                    sb.append("Количество опрошенных: ").append(poll.getTotalVoterCount()).append("\n");
-                    poll.getOptions().forEach(option -> sb.append(option.getText()).append(": ").append(option.getVoterCount()).append("\n"));
+                    sb.append("*").append(poll.getTotalVoterCount()).append("*").append(" - Количество опрошенных").append("\n");
+                    poll.getOptions().forEach(option -> sb.append("*").append(option.getVoterCount()).append("*").append(" - ").append(option.getText()).append("\n"));
                     sb.append("\n\n\n");
                 });
         return sb.toString();
