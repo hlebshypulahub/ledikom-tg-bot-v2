@@ -76,7 +76,6 @@ public class ScheduleService {
 
     @Scheduled(cron = "0 0 8-23 * * *", zone = "GMT+3")
     public void sendEventsToAdminHourly() {
-        System.out.println(1);
         BotService.eventCollector.setTimestamp(LocalDateTime.now());
         eventCollectorRepository.save(BotService.eventCollector);
         sendMessageCallback.execute(botUtilityService.buildSendMessage(BotService.eventCollector.messageToAdmin(EventCollector.MessageFrequency.HOURLY) + "\n\n\n\n" + pollService.getPollsInfoForAdmin(), adminId));
