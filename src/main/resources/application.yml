@@ -20,7 +20,7 @@ gpt:
   token: ${GPT_TOKEN}
 
 coupon:
-  duration-minutes: 5
+  duration-minutes: 15
   expire-in-days: 30
 
 hello-coupon:
